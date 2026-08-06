@@ -23,6 +23,25 @@ Un dossier pilote, quatre contrôles :
 
 Sortie : alertes sourcées, décision humaine et fiche de constat provisoire.
 
+## Démonstrateur d’interface
+
+La branche `feat/mvp-01-ui` contient une interface Next.js entièrement fictive :
+
+- liste et filtrage des dossiers ;
+- document avec passage source surligné ;
+- fiche d’alerte explicable ;
+- confirmation, rejet ou demande de pièce ;
+- prévisualisation d’une fiche de constat.
+
+### Lancer localement
+
+```powershell
+npm install
+npm run dev
+```
+
+Puis ouvrir `http://localhost:3000`.
+
 ## Principes
 
 - aucune accusation automatique ;
