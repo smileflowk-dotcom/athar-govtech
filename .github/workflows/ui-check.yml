@@ -1,12 +1,15 @@
-name: UI check
+name: ATHAR check
 
 on:
   pull_request:
     paths:
       - "app/**"
+      - "lib/**"
       - "package.json"
+      - "package-lock.json"
       - "tsconfig.json"
       - "next-env.d.ts"
+      - "next.config.ts"
       - ".github/workflows/ui-check.yml"
   workflow_dispatch:
 
@@ -21,8 +24,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: package.json
       - name: Install
-        run: npm install
+        run: npm ci
       - name: Build
         run: npm run build
