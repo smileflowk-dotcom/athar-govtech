@@ -138,7 +138,7 @@ const initialDossiers: Dossier[] = [
       },
       {
         id: "building-clause",
-        type: "Référence technique très précise",
+        type: "Clause potentiellement restrictive",
         level: "Moyen",
         rule: "Ouverture aux solutions équivalentes",
         expected: "La performance attendue prime sur une référence fermée.",
@@ -171,7 +171,7 @@ const initialDossiers: Dossier[] = [
     alerts: [
       {
         id: "cleaning-clause",
-        type: "Spécification à justifier",
+        type: "Clause potentiellement restrictive",
         level: "Moyen",
         rule: "Proportionnalité de l’exigence",
         expected: "L’exigence doit être liée au besoin.",
@@ -264,13 +264,20 @@ export default function Home() {
     };
   }, [activeDossier]);
 
+  const neighboringPages = useMemo(() => {
+    const currentPage = activeAlert?.page ?? 1;
+    const candidates = [currentPage - 2, currentPage - 1, currentPage, currentPage + 1]
+      .map((page) => Math.min(34, Math.max(1, page)));
+    return [...new Set(candidates)];
+  }, [activeAlert]);
+
   function selectDossier(dossier: Dossier) {
     setActiveDossierId(dossier.id);
     setActiveAlertId(dossier.alerts[0]?.id ?? "");
   }
 
   function updateAlertStatus(status: AlertStatus) {
-    if (!activeAlert) return;
+    if (!activeAlert || activeAlert.status === status) return;
     setDossiers((current) =>
       current.map((dossier) =>
         dossier.id !== activeDossier.id
@@ -359,8 +366,8 @@ export default function Home() {
           </div>
           <div className="pdf-stage">
             <div className="thumbnail-strip" aria-label="Pages voisines">
-              {[10, 11, activeAlert?.page ?? 12, 13].map((page, index) => (
-                <button key={`${page}-${index}`} className={index === 2 ? "thumbnail active" : "thumbnail"}>
+              {neighboringPages.map((page) => (
+                <button key={page} className={page === (activeAlert?.page ?? 1) ? "thumbnail active" : "thumbnail"}>
                   <span className="thumb-lines" />
                   <small>{page}</small>
                 </button>
@@ -399,10 +406,34 @@ export default function Home() {
                 <div><dt>Preuve</dt><dd><button className="evidence-link">{activeAlert.evidence}</button></dd></div>
                 <div><dt>Action recommandée</dt><dd>{activeAlert.action}</dd></div>
               </dl>
-              <div className="decision-actions">
-                <button className="primary-button" onClick={() => updateAlertStatus("confirmed")}><Check size={17} /> Confirmer</button>
-                <button className="secondary-button" onClick={() => updateAlertStatus("dismissed")}><CircleX size={17} /> Écarter</button>
-                <button className="secondary-button full" onClick={() => updateAlertStatus("requested")}><MessageSquareText size={17} /> Demander une pièce</button>
+              <div
+                className="decision-actions"
+                style={{ position: "sticky", bottom: 0, zIndex: 3, background: "white" }}
+              >
+                <button
+                  className="primary-button"
+                  disabled={activeAlert.status === "confirmed"}
+                  aria-pressed={activeAlert.status === "confirmed"}
+                  onClick={() => updateAlertStatus("confirmed")}
+                >
+                  <Check size={17} /> {activeAlert.status === "confirmed" ? "Confirmée" : "Confirmer"}
+                </button>
+                <button
+                  className="secondary-button"
+                  disabled={activeAlert.status === "dismissed"}
+                  aria-pressed={activeAlert.status === "dismissed"}
+                  onClick={() => updateAlertStatus("dismissed")}
+                >
+                  <CircleX size={17} /> {activeAlert.status === "dismissed" ? "Écartée" : "Écarter"}
+                </button>
+                <button
+                  className="secondary-button full"
+                  disabled={activeAlert.status === "requested"}
+                  aria-pressed={activeAlert.status === "requested"}
+                  onClick={() => updateAlertStatus("requested")}
+                >
+                  <MessageSquareText size={17} /> {activeAlert.status === "requested" ? "Pièce demandée" : "Demander une pièce"}
+                </button>
               </div>
               <div className="alert-switcher">
                 <span>Alertes du dossier</span>
