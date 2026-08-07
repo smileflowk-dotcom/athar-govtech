@@ -38,6 +38,7 @@ const indicatorLabels: Record<string, string> = {
   "named-brand": "Marque nommément désignée",
   "brand-certification": "Certification liée à une marque",
   "missing-equivalence": "Absence de mention d’équivalence",
+  "insufficient-publication-delay": "Délai observé inférieur au minimum applicable",
 };
 
 export default function Home() {
@@ -214,13 +215,13 @@ export default function Home() {
           <div className="pdf-stage">
             <article className="pdf-page">
               <p className="document-kicker">
-                {activeDossier.realDocument ? "Document importé dans ATHAR" : "Section III. Instructions aux soumissionnaires"}
+                {activeDossier.realDocument ? "Document importé dans ATHAR" : "Document de démonstration"}
               </p>
-              <h3>{activeDossier.realDocument ? `Texte extrait — page ${activeDossier.activePage}` : "Spécifications et conditions d’éligibilité"}</h3>
+              <h3>{activeDossier.realDocument ? `Texte extrait — page ${activeDossier.activePage}` : "Éléments analysés"}</h3>
               <p>
                 {activeDossier.realDocument
                   ? "Le texte ci-dessous a été extrait du PDF par l’instance ATHAR. Le document n’est envoyé à aucune API externe."
-                  : "Le présent extrait est fictif et sert uniquement à démontrer le contrôle ATHAR."}
+                  : "Le présent extrait est fictif et sert uniquement à démontrer un contrôle ATHAR."}
               </p>
               {activeAlert ? (
                 <mark>{activeAlert.highlight}</mark>
@@ -230,8 +231,8 @@ export default function Home() {
               <h4>Résultat du traitement</h4>
               <p>
                 {activeAlert
-                  ? "Le moteur a trouvé une combinaison d’indicateurs nécessitant une validation humaine."
-                  : "Aucune combinaison suffisante d’indicateurs restrictifs n’a été détectée dans le passage analysé."}
+                  ? "Le moteur a trouvé un signal nécessitant une validation humaine."
+                  : "Aucun signal suffisant n’a été détecté par le contrôle appliqué."}
               </p>
             </article>
           </div>
@@ -252,7 +253,7 @@ export default function Home() {
 
               <dl className="alert-details">
                 <div><dt>Niveau de vigilance</dt><dd><span className={`level level-${activeAlert.level.toLowerCase()}`}>{activeAlert.level}</span></dd></div>
-                <div><dt>Indicateurs déclenchés</dt><dd>{activeAlert.indicators.map((indicator) => indicatorLabels[indicator]).join(" · ")}</dd></div>
+                <div><dt>Indicateurs déclenchés</dt><dd>{activeAlert.indicators.map((indicator) => indicatorLabels[indicator] ?? indicator).join(" · ")}</dd></div>
                 <div><dt>Règle de contrôle</dt><dd>{activeAlert.rule}</dd></div>
                 <div><dt>Attendu</dt><dd>{activeAlert.expected}</dd></div>
                 <div><dt>Justification</dt><dd>{activeAlert.observed}</dd></div>
@@ -289,7 +290,7 @@ export default function Home() {
             <div className="no-alerts">
               <ShieldCheck size={36} />
               <strong>Aucune alerte déclenchée</strong>
-              <span>Le contrôle V0 n’a pas trouvé de combinaison suffisante d’indicateurs dans ce document.</span>
+              <span>Le contrôle V0 n’a pas trouvé de signal suffisant dans ce document.</span>
             </div>
           )}
         </aside>
