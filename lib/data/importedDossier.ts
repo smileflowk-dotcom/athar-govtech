@@ -15,25 +15,34 @@ export type ExtractedPdf = {
 };
 
 function candidatePassages(text: string): string[] {
-  const lines = text
-    .split(/\n+/)
-    .map((line) => line.trim())
-    .filter((line) => line.length >= 8);
+  // Un PDF coupe souvent une même phrase sur plusieurs lignes visuelles.
+  // On reconstruit donc des segments de phrase avant d'exécuter le contrôle,
+  // afin d'éviter qu'un fragment comme « ... marque X, ou » ne déclenche
+  // une fausse alerte alors que « équivalent » se trouve sur la ligne suivante.
+  const normalizedText = text
+    .replace(/\r/g, "")
+    .replace(/\n+/g, " ")
+    .replace(/[•]/g, "\n")
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
 
-  const passages = new Set<string>();
+  const segments = normalizedText
+    .split(/\n+|(?<=[.!?;])\s+/u)
+    .map((segment) => segment.trim())
+    .filter((segment) => segment.length >= 20 && segment.length <= 1800);
 
-  for (const line of lines) passages.add(line);
+  const passages = new Set<string>(segments);
 
-  for (let index = 0; index < lines.length; index += 1) {
-    for (let size = 2; size <= 5; size += 1) {
-      const passage = lines.slice(index, index + size).join(" ").trim();
-      if (passage.length >= 30 && passage.length <= 1800) passages.add(passage);
-    }
+  // Certaines exigences sont réparties sur deux phrases courtes : on conserve
+  // une fenêtre locale sans élargir au reste de la page.
+  for (let index = 0; index < segments.length - 1; index += 1) {
+    const passage = `${segments[index]} ${segments[index + 1]}`.trim();
+    if (passage.length >= 30 && passage.length <= 1800) passages.add(passage);
   }
 
-  if (text.length <= 1800) passages.add(text.trim());
+  if (normalizedText.length <= 1800) passages.add(normalizedText);
 
-  return [...passages].sort((a, b) => a.length - b.length);
+  return [...passages];
 }
 
 export function buildImportedDossier(pdf: ExtractedPdf): Dossier {
