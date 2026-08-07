@@ -30,8 +30,10 @@ const BRAND_PATTERNS = [
 const EXPLICIT_BRAND_PATTERN =
   /\b(?:de\s+)?marque\s+(?!reconnue\b|d['’]identification\b|du\b|de\b|commerciale\b|fabricant\b|constructeur\b|agréée\b)([A-Za-zÀ-ÿ0-9][A-Za-zÀ-ÿ0-9'’&.+/-]*(?:\s+[A-Za-zÀ-ÿ0-9][A-Za-zÀ-ÿ0-9'’&.+/-]*){0,3})/i;
 
+// Ne pas utiliser \b après « certifié / agréé / autorisé » : en JavaScript,
+// la frontière de mot est ASCII et ne reconnaît pas « é » comme caractère de mot.
 const CERTIFICATION_PATTERN =
-  /\b(?:partenaire|revendeur|distributeur|intégrateur)\s+(?:certifié|agréé|autorisé)\b/i;
+  /\b(?:partenaire|revendeur|distributeur|intégrateur)\s+(?:certifié|agréé|autorisé)(?=\s|[.,;:!?)]|$)/i;
 
 const EQUIVALENCE_PATTERN =
   /\b(?:ou\s+(?:techniquement\s+)?équivalent(?:e)?s?|équivalence|solution(?:s)?\s+(?:techniquement\s+)?équivalente(?:s)?)\b/i;
