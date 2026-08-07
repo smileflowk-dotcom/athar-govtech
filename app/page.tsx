@@ -39,11 +39,15 @@ const indicatorLabels: Record<string, string> = {
   "brand-certification": "Certification liée à une marque",
   "missing-equivalence": "Absence de mention d’équivalence",
   "insufficient-publication-delay": "Délai observé inférieur au minimum applicable",
+  "missing-probity-declaration": "Déclaration de probité absente ou non retrouvée",
 };
 
 export default function Home() {
   const [dossiers, setDossiers] = useState(demoDossiers);
   const [activeDossierId, setActiveDossierId] = useState(demoDossiers[0].id);
+  const [activeAlertId, setActiveAlertId] = useState<string | null>(
+    demoDossiers[0].alerts[0]?.id ?? null,
+  );
   const [query, setQuery] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [pdfImporting, setPdfImporting] = useState(false);
@@ -51,7 +55,12 @@ export default function Home() {
 
   const activeDossier =
     dossiers.find((dossier) => dossier.id === activeDossierId) ?? dossiers[0];
-  const activeAlert = activeDossier.alerts[0];
+  const activeAlert =
+    activeDossier.alerts.find((alert) => alert.id === activeAlertId) ?? activeDossier.alerts[0];
+  const activeAlertIndex = activeAlert
+    ? activeDossier.alerts.findIndex((alert) => alert.id === activeAlert.id)
+    : -1;
+  const confirmedAlerts = activeDossier.alerts.filter((alert) => alert.status === "confirmed");
 
   const filteredDossiers = useMemo(
     () =>
@@ -63,6 +72,7 @@ export default function Home() {
 
   function selectDossier(dossier: Dossier) {
     setActiveDossierId(dossier.id);
+    setActiveAlertId(dossier.alerts[0]?.id ?? null);
   }
 
   function updateAlertStatus(status: AlertStatus) {
@@ -74,7 +84,9 @@ export default function Home() {
           ? dossier
           : {
               ...dossier,
-              alerts: dossier.alerts.map((alert) => ({ ...alert, status })),
+              alerts: dossier.alerts.map((alert) =>
+                alert.id === activeAlert.id ? { ...alert, status } : alert,
+              ),
             },
       ),
     );
@@ -105,6 +117,7 @@ export default function Home() {
       const importedDossier = buildImportedDossier(payload);
       setDossiers((current) => [importedDossier, ...current]);
       setActiveDossierId(importedDossier.id);
+      setActiveAlertId(importedDossier.alerts[0]?.id ?? null);
     } catch (error) {
       setPdfError(error instanceof Error ? error.message : "Impossible de lire ce PDF.");
     } finally {
@@ -185,7 +198,7 @@ export default function Home() {
                   <span className={dossier.alerts.length ? "alert-count" : "muted"}>
                     {dossier.alerts.length ? <AlertTriangle size={13} /> : <ShieldCheck size={13} />}
                     {dossier.alerts.length
-                      ? " 1 alerte calculée"
+                      ? ` ${dossier.alerts.length} alerte${dossier.alerts.length > 1 ? "s" : ""} calculée${dossier.alerts.length > 1 ? "s" : ""}`
                       : " Aucun signal détecté"}
                   </span>
                 </div>
@@ -285,6 +298,22 @@ export default function Home() {
                   <MessageSquareText size={17} /> {activeAlert.status === "requested" ? "Pièce demandée" : "Demander une pièce"}
                 </button>
               </div>
+
+              {activeDossier.alerts.length > 1 && (
+                <div className="alert-switcher">
+                  <span>Alerte {activeAlertIndex + 1} / {activeDossier.alerts.length}</span>
+                  <div>
+                    {activeDossier.alerts.map((alert) => (
+                      <button
+                        key={alert.id}
+                        className={`alert-dot ${alert.id === activeAlert.id ? "active" : ""}`}
+                        aria-label={`Afficher ${alert.type}`}
+                        onClick={() => setActiveAlertId(alert.id)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
             </>
           ) : (
             <div className="no-alerts">
@@ -298,9 +327,9 @@ export default function Home() {
 
       <section className="output-panel">
         <div className="output-title"><h2>Sortie</h2><span>Résultat du dossier actif</span></div>
-        <div className="stat-card"><ShieldCheck size={21} /><strong>{activeAlert?.status === "confirmed" ? 1 : 0}</strong><span>alerte validée</span></div>
-        <div className="stat-card"><AlertTriangle size={21} /><strong>{activeDossier.alerts.length}</strong><span>signal calculé</span></div>
-        <div className="stat-card"><FileText size={21} /><strong>1</strong><span>preuve rattachée</span></div>
+        <div className="stat-card"><ShieldCheck size={21} /><strong>{confirmedAlerts.length}</strong><span>alerte{confirmedAlerts.length > 1 ? "s" : ""} validée{confirmedAlerts.length > 1 ? "s" : ""}</span></div>
+        <div className="stat-card"><AlertTriangle size={21} /><strong>{activeDossier.alerts.length}</strong><span>signal{activeDossier.alerts.length > 1 ? "aux" : ""} calculé{activeDossier.alerts.length > 1 ? "s" : ""}</span></div>
+        <div className="stat-card"><FileText size={21} /><strong>{activeDossier.alerts.length}</strong><span>preuve{activeDossier.alerts.length > 1 ? "s" : ""} rattachée{activeDossier.alerts.length > 1 ? "s" : ""}</span></div>
         <button className="preview-button" onClick={() => setPreviewOpen(true)}><Eye size={18} /> Prévisualiser la fiche de constat</button>
       </section>
 
@@ -313,18 +342,20 @@ export default function Home() {
             </div>
             <div className="report-body">
               <p className="report-warning">Validation humaine requise — aucune conclusion juridique automatique.</p>
-              {activeAlert?.status === "confirmed" ? (
-                <article className="report-finding">
-                  <span>Constat 1</span>
-                  <h3>{activeAlert.type}</h3>
-                  <p>{activeAlert.observed}</p>
-                  <dl>
-                    <dt>Preuve</dt><dd>{activeAlert.evidence}</dd>
-                    <dt>Suite proposée</dt><dd>{activeAlert.action}</dd>
-                  </dl>
-                </article>
+              {confirmedAlerts.length ? (
+                confirmedAlerts.map((alert, index) => (
+                  <article key={alert.id} className="report-finding">
+                    <span>Constat {index + 1}</span>
+                    <h3>{alert.type}</h3>
+                    <p>{alert.observed}</p>
+                    <dl>
+                      <dt>Preuve</dt><dd>{alert.evidence}</dd>
+                      <dt>Suite proposée</dt><dd>{alert.action}</dd>
+                    </dl>
+                  </article>
+                ))
               ) : (
-                <p>Aucun constat exportable : le contrôleur doit confirmer l’alerte.</p>
+                <p>Aucun constat exportable : le contrôleur doit confirmer au moins une alerte.</p>
               )}
             </div>
           </section>
