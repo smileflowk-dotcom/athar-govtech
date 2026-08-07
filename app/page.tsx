@@ -9,17 +9,23 @@ import {
   FileCheck2,
   FileText,
   HelpCircle,
+  Loader2,
   MessageSquareText,
   Search,
   ShieldCheck,
+  Upload,
   X,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { type ChangeEvent, useMemo, useState } from "react";
 import {
   demoDossiers,
   type AlertStatus,
   type Dossier,
 } from "../lib/data/demoDossiers";
+import {
+  buildImportedDossier,
+  type ExtractedPdf,
+} from "../lib/data/importedDossier";
 
 const statusLabels: Record<AlertStatus, string> = {
   pending: "À valider",
@@ -39,6 +45,8 @@ export default function Home() {
   const [activeDossierId, setActiveDossierId] = useState(demoDossiers[0].id);
   const [query, setQuery] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [pdfImporting, setPdfImporting] = useState(false);
+  const [pdfError, setPdfError] = useState("");
 
   const activeDossier =
     dossiers.find((dossier) => dossier.id === activeDossierId) ?? dossiers[0];
@@ -71,6 +79,38 @@ export default function Home() {
     );
   }
 
+  async function handlePdfUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    setPdfError("");
+    setPdfImporting(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/pdf/extract", {
+        method: "POST",
+        body: formData,
+      });
+      const payload = (await response.json()) as ExtractedPdf & { error?: string };
+
+      if (!response.ok) {
+        throw new Error(payload.error ?? "Impossible de lire ce PDF.");
+      }
+
+      const importedDossier = buildImportedDossier(payload);
+      setDossiers((current) => [importedDossier, ...current]);
+      setActiveDossierId(importedDossier.id);
+    } catch (error) {
+      setPdfError(error instanceof Error ? error.message : "Impossible de lire ce PDF.");
+    } finally {
+      setPdfImporting(false);
+    }
+  }
+
   return (
     <main className="app-shell">
       <header className="topbar">
@@ -97,7 +137,24 @@ export default function Home() {
 
       <section className="workspace">
         <aside className="panel dossier-panel">
-          <div className="panel-title-row"><h2>Dossiers de démonstration</h2></div>
+          <div className="panel-title-row">
+            <h2>Dossiers</h2>
+            <label
+              className="secondary-button"
+              style={{ minHeight: 32, padding: "0 9px", fontSize: 11, opacity: pdfImporting ? 0.7 : 1 }}
+              title="Le PDF est traité par l’instance ATHAR locale, sans API externe."
+            >
+              {pdfImporting ? <Loader2 size={14} /> : <Upload size={14} />}
+              {pdfImporting ? "Extraction…" : "Importer PDF"}
+              <input
+                type="file"
+                accept="application/pdf,.pdf"
+                onChange={handlePdfUpload}
+                disabled={pdfImporting}
+                hidden
+              />
+            </label>
+          </div>
           <div className="search-row">
             <label className="search-box">
               <Search size={16} />
@@ -108,6 +165,12 @@ export default function Home() {
               />
             </label>
           </div>
+
+          {pdfError && (
+            <div style={{ color: "#b42318", fontSize: 11, padding: "0 12px 10px" }}>
+              {pdfError}
+            </div>
+          )}
 
           <div className="dossier-list">
             {filteredDossiers.map((dossier) => (
@@ -131,34 +194,44 @@ export default function Home() {
               </button>
             ))}
           </div>
-          <div className="panel-footer">Contrôle local et déterministe</div>
+          <div className="panel-footer">Traitement local · aucune API documentaire externe</div>
         </aside>
 
         <section className="panel document-panel">
           <div className="panel-title-row">
             <h2>Document</h2>
             <span className="source-badge">
-              <FileText size={14} /> CPS fictif — extrait analysé
+              <FileText size={14} /> {activeDossier.sourceLabel}
             </span>
           </div>
 
           <div className="pdf-toolbar">
-            <span>Page {activeAlert?.page ?? 8} / 34</span>
+            <span>Page {activeDossier.activePage} / {activeDossier.totalPages}</span>
             <span className="toolbar-separator" />
-            <span>Analyse locale V0</span>
+            <span>{activeDossier.realDocument ? "PDF extrait localement" : "Analyse locale V0"}</span>
           </div>
 
           <div className="pdf-stage">
             <article className="pdf-page">
-              <p className="document-kicker">Section III. Instructions aux soumissionnaires</p>
-              <h3>Spécifications et conditions d’éligibilité</h3>
-              <p>Le présent extrait est fictif et sert uniquement à démontrer le contrôle ATHAR.</p>
-              {activeAlert ? <mark>{activeAlert.highlight}</mark> : <p>{activeDossier.excerpt}</p>}
+              <p className="document-kicker">
+                {activeDossier.realDocument ? "Document importé dans ATHAR" : "Section III. Instructions aux soumissionnaires"}
+              </p>
+              <h3>{activeDossier.realDocument ? `Texte extrait — page ${activeDossier.activePage}` : "Spécifications et conditions d’éligibilité"}</h3>
+              <p>
+                {activeDossier.realDocument
+                  ? "Le texte ci-dessous a été extrait du PDF par l’instance ATHAR. Le document n’est envoyé à aucune API externe."
+                  : "Le présent extrait est fictif et sert uniquement à démontrer le contrôle ATHAR."}
+              </p>
+              {activeAlert ? (
+                <mark>{activeAlert.highlight}</mark>
+              ) : (
+                <p style={{ whiteSpace: "pre-wrap", marginTop: 18 }}>{activeDossier.excerpt}</p>
+              )}
               <h4>Résultat du traitement</h4>
               <p>
                 {activeAlert
                   ? "Le moteur a trouvé une combinaison d’indicateurs nécessitant une validation humaine."
-                  : "Aucune combinaison suffisante d’indicateurs restrictifs n’a été détectée."}
+                  : "Aucune combinaison suffisante d’indicateurs restrictifs n’a été détectée dans le passage analysé."}
               </p>
             </article>
           </div>
@@ -216,7 +289,7 @@ export default function Home() {
             <div className="no-alerts">
               <ShieldCheck size={36} />
               <strong>Aucune alerte déclenchée</strong>
-              <span>La mention d’équivalence neutralise le signal dans ce scénario.</span>
+              <span>Le contrôle V0 n’a pas trouvé de combinaison suffisante d’indicateurs dans ce document.</span>
             </div>
           )}
         </aside>
