@@ -43,6 +43,8 @@ Entités :
 - journal des validations ;
 - architecture on-premise cible, à cadrer avec la Cour.
 
+La stratégie détaillée de déploiement interne, de souveraineté et de protection des documents sensibles est documentée dans [`SECURITY_ON_PREMISE.md`](./SECURITY_ON_PREMISE.md).
+
 ## Extensions non activées
 
 Cardinal, PyOD, NetworkX, Yente, Presidio, PostgreSQL et graphes avancés restent des options après validation du noyau.
