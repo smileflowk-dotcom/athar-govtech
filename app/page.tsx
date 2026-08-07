@@ -40,6 +40,7 @@ const indicatorLabels: Record<string, string> = {
   "missing-equivalence": "Absence de mention d’équivalence",
   "insufficient-publication-delay": "Délai observé inférieur au minimum applicable",
   "missing-probity-declaration": "Déclaration de probité absente ou non retrouvée",
+  "ranking-attribution-mismatch": "Attributaire différent du mieux classé recalculé",
 };
 
 type PersistedUiState = {
@@ -67,6 +68,7 @@ export default function Home() {
   const activeAlertIndex = activeAlert
     ? activeDossier.alerts.findIndex((alert) => alert.id === activeAlert.id)
     : -1;
+  const displayedPage = activeAlert?.page ?? activeDossier.activePage;
   const confirmedAlerts = activeDossier.alerts.filter((alert) => alert.status === "confirmed");
 
   const filteredDossiers = useMemo(
@@ -280,7 +282,7 @@ export default function Home() {
           </div>
 
           <div className="pdf-toolbar">
-            <span>Page {activeDossier.activePage} / {activeDossier.totalPages}</span>
+            <span>Page {displayedPage} / {activeDossier.totalPages}</span>
             <span className="toolbar-separator" />
             <span>{activeDossier.realDocument ? "PDF extrait localement" : "Analyse locale V0"}</span>
           </div>
@@ -290,7 +292,7 @@ export default function Home() {
               <p className="document-kicker">
                 {activeDossier.realDocument ? "Document importé dans ATHAR" : "Document de démonstration"}
               </p>
-              <h3>{activeDossier.realDocument ? `Texte extrait — page ${activeDossier.activePage}` : "Éléments analysés"}</h3>
+              <h3>{activeDossier.realDocument ? `Texte extrait — page ${displayedPage}` : `Éléments analysés — page ${displayedPage}`}</h3>
               <p>
                 {activeDossier.realDocument
                   ? "Le texte ci-dessous a été extrait du PDF par l’instance ATHAR. Le document n’est envoyé à aucune API externe."
@@ -388,7 +390,7 @@ export default function Home() {
       <section className="output-panel">
         <div className="output-title"><h2>Sortie</h2><span>Résultat du dossier actif</span></div>
         <div className="stat-card"><ShieldCheck size={21} /><strong>{confirmedAlerts.length}</strong><span>alerte{confirmedAlerts.length > 1 ? "s" : ""} validée{confirmedAlerts.length > 1 ? "s" : ""}</span></div>
-        <div className="stat-card"><AlertTriangle size={21} /><strong>{activeDossier.alerts.length}</strong><span>signal{activeDossier.alerts.length > 1 ? "aux" : ""} calculé{activeDossier.alerts.length > 1 ? "s" : ""}</span></div>
+        <div className="stat-card"><AlertTriangle size={21} /><strong>{activeDossier.alerts.length}</strong><span>{activeDossier.alerts.length > 1 ? "signaux calculés" : "signal calculé"}</span></div>
         <div className="stat-card"><FileText size={21} /><strong>{activeDossier.alerts.length}</strong><span>preuve{activeDossier.alerts.length > 1 ? "s" : ""} rattachée{activeDossier.alerts.length > 1 ? "s" : ""}</span></div>
         <button className="preview-button" onClick={() => setPreviewOpen(true)}><Eye size={18} /> Prévisualiser la fiche de constat</button>
       </section>
@@ -409,7 +411,11 @@ export default function Home() {
                     <h3>{alert.type}</h3>
                     <p>{alert.observed}</p>
                     <dl>
+                      <dt>Règle</dt><dd>{alert.rule}</dd>
+                      <dt>Attendu</dt><dd>{alert.expected}</dd>
+                      <dt>Observé</dt><dd>{alert.observed}</dd>
                       <dt>Preuve</dt><dd>{alert.evidence}</dd>
+                      <dt>Décision humaine</dt><dd>{statusLabels[alert.status]}</dd>
                       <dt>Suite proposée</dt><dd>{alert.action}</dd>
                     </dl>
                   </article>
