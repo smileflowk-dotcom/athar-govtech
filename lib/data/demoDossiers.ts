@@ -24,6 +24,10 @@ export type Dossier = {
   score: number;
   excerpt: string;
   alerts: ProcurementAlert[];
+  sourceLabel: string;
+  totalPages: number;
+  activePage: number;
+  realDocument: boolean;
 };
 
 const restrictiveExcerpt =
@@ -40,6 +44,10 @@ function buildDossier(id: string, title: string, excerpt: string, page: number):
     title,
     score: result.triggered ? 85 : 12,
     excerpt,
+    sourceLabel: "CPS fictif — extrait analysé",
+    totalPages: 34,
+    activePage: page,
+    realDocument: false,
     alerts: result.triggered
       ? [
           {
