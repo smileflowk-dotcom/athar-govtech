@@ -1,0 +1,81 @@
+name: ATHAR on-premise Docker check
+
+on:
+  pull_request:
+    paths:
+      - "Dockerfile"
+      - "docker-compose.yml"
+      - ".dockerignore"
+      - ".env.example"
+      - "Makefile"
+      - "README_DOCKER.md"
+      - "app/api/state/**"
+      - "app/api/health/**"
+      - "lib/persistence/**"
+      - "app/page.tsx"
+      - "next.config.ts"
+      - ".github/workflows/docker-onpremise-check.yml"
+  workflow_dispatch:
+
+jobs:
+  docker-poc:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker compose build
+
+      - name: Start isolated stack
+        run: docker compose up -d
+
+      - name: Wait for local healthcheck
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:3000/api/health >/tmp/athar-health.json; then
+              cat /tmp/athar-health.json
+              exit 0
+            fi
+            sleep 2
+          done
+          docker compose logs athar
+          exit 1
+
+      - name: Verify outbound Internet is blocked
+        run: |
+          docker compose exec -T athar node -e "fetch('https://example.com',{signal:AbortSignal.timeout(3000)}).then(()=>{console.error('Unexpected outbound Internet access');process.exit(1)}).catch(()=>{console.log('Outbound Internet blocked as expected');process.exit(0)})"
+
+      - name: Write persistence sentinel
+        run: |
+          curl --fail --silent \
+            -X PUT \
+            -H 'content-type: application/json' \
+            --data '{"dossiers":[{"id":"docker-persistence-sentinel"}],"activeDossierId":"docker-persistence-sentinel","activeAlertId":null}' \
+            http://127.0.0.1:3000/api/state
+
+      - name: Restart containers without deleting volume
+        run: |
+          docker compose down
+          docker compose up -d
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:3000/api/health >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker compose logs athar
+          exit 1
+
+      - name: Verify SQLite data survived restart
+        run: |
+          curl --fail --silent http://127.0.0.1:3000/api/state | grep -q 'docker-persistence-sentinel'
+          echo 'SQLite persistence survived docker compose down/up.'
+
+      - name: Show network isolation metadata
+        run: docker network inspect athar_govtech_internal
+
+      - name: Cleanup
+        if: always()
+        run: docker compose down -v
