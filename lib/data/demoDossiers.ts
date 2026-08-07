@@ -1,3 +1,4 @@
+import { detectPublicationDelay } from "../controls/publicationDelay";
 import { detectRestrictiveClause } from "../controls/restrictiveClause";
 
 export type AlertStatus = "pending" | "confirmed" | "dismissed" | "requested";
@@ -71,6 +72,48 @@ function buildDossier(id: string, title: string, excerpt: string, page: number):
   };
 }
 
+function buildPublicationDelayDossier(): Dossier {
+  const result = detectPublicationDelay({
+    date_publication: "2026-01-01",
+    date_limite_depot: "2026-01-31",
+    montant_estime: 2_500_000,
+    type_procedure: "appel_offres_ouvert_fournitures_services_etat",
+  });
+
+  const excerpt =
+    "Avis d’appel d’offres — publication : 01/01/2026 — date limite de dépôt : 31/01/2026 — estimation : 2 500 000 DH HT.";
+
+  return {
+    id: "publication-delay",
+    title: "Marché de services — délai de publication",
+    score: result.triggered ? 90 : 12,
+    excerpt,
+    sourceLabel: "Avis fictif — calendrier de publication",
+    totalPages: 1,
+    activePage: 1,
+    realDocument: false,
+    alerts: result.triggered
+      ? [
+          {
+            id: "publication-delay-control",
+            type: "Délai de publication potentiellement insuffisant",
+            level: result.level,
+            rule: result.ruleReference,
+            expected: result.expected,
+            observed: `${result.observed} ${result.gap}`,
+            evidence: `Avis fictif — page 1 — ${result.evidence}`,
+            action: result.recommendation,
+            page: 1,
+            highlight: excerpt,
+            status: "pending",
+            indicators: result.indicators,
+            generatedByControl: true,
+          },
+        ]
+      : [],
+  };
+}
+
 export const demoDossiers: Dossier[] = [
   buildDossier(
     "equipment",
@@ -84,4 +127,5 @@ export const demoDossiers: Dossier[] = [
     compliantExcerpt,
     8,
   ),
+  buildPublicationDelayDossier(),
 ];
