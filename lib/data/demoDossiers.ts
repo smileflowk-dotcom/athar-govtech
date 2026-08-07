@@ -1,3 +1,4 @@
+import { detectProbityDeclarationSignals } from "../controls/probityDeclaration";
 import { detectPublicationDelay } from "../controls/publicationDelay";
 import { detectRestrictiveClause } from "../controls/restrictiveClause";
 
@@ -114,6 +115,48 @@ function buildPublicationDelayDossier(): Dossier {
   };
 }
 
+function buildProbityDossier(): Dossier {
+  const members = [
+    { name: "Membre A", declaration_probite_presente: true },
+    { name: "Membre B", declaration_probite_presente: false },
+    { name: "Membre C", declaration_probite_presente: false },
+  ];
+  const sourceReference = "Liste fictive des membres de la commission — page 1";
+  const results = detectProbityDeclarationSignals(members, sourceReference);
+  const excerpt = members
+    .map(
+      (member) =>
+        `${member.name} — déclaration de probité : ${member.declaration_probite_presente ? "présente" : "non retrouvée"}`,
+    )
+    .join("\n");
+
+  return {
+    id: "probity-declarations",
+    title: "Commission d’appel d’offres — déclarations de probité",
+    score: results.length ? 90 : 12,
+    excerpt,
+    sourceLabel: sourceReference,
+    totalPages: 1,
+    activePage: 1,
+    realDocument: false,
+    alerts: results.map((result, index) => ({
+      id: `probity-declaration-${index + 1}`,
+      type: "Signal simple relatif aux obligations de probité",
+      level: result.level,
+      rule: result.ruleReference,
+      expected: result.expected,
+      observed: result.explanation,
+      evidence: result.evidence,
+      action: result.recommendation,
+      page: 1,
+      highlight: `${result.memberName} — déclaration de probité : non retrouvée`,
+      status: "pending",
+      indicators: result.indicators,
+      generatedByControl: true,
+    })),
+  };
+}
+
 export const demoDossiers: Dossier[] = [
   buildDossier(
     "equipment",
@@ -128,4 +171,5 @@ export const demoDossiers: Dossier[] = [
     8,
   ),
   buildPublicationDelayDossier(),
+  buildProbityDossier(),
 ];
