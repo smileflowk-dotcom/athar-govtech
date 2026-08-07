@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "Dockerfile"
+      - "docker/**"
       - "docker-compose.yml"
       - ".dockerignore"
       - ".env.example"
@@ -25,13 +26,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build image
+      - name: Build images
         run: docker compose build
 
       - name: Start isolated stack
         run: docker compose up -d
 
-      - name: Wait for local healthcheck
+      - name: Wait for local healthcheck through gateway
         run: |
           for attempt in $(seq 1 30); do
             if curl --fail --silent http://127.0.0.1:3000/api/health >/tmp/athar-health.json; then
@@ -40,10 +41,20 @@ jobs:
             fi
             sleep 2
           done
-          docker compose logs athar
+          docker compose logs
           exit 1
 
-      - name: Verify outbound Internet is blocked
+      - name: Verify ATHAR is attached only to internal network
+        run: |
+          NETWORKS="$(docker inspect "$(docker compose ps -q athar)" --format '{{json .NetworkSettings.Networks}}')"
+          echo "$NETWORKS"
+          echo "$NETWORKS" | grep -q 'athar_govtech_internal'
+          if echo "$NETWORKS" | grep -q 'athar_govtech_ingress'; then
+            echo 'ATHAR must not be attached to the ingress network.'
+            exit 1
+          fi
+
+      - name: Verify outbound Internet is blocked from ATHAR
         run: |
           docker compose exec -T athar node -e "fetch('https://example.com',{signal:AbortSignal.timeout(3000)}).then(()=>{console.error('Unexpected outbound Internet access');process.exit(1)}).catch(()=>{console.log('Outbound Internet blocked as expected');process.exit(0)})"
 
@@ -65,7 +76,7 @@ jobs:
             fi
             sleep 2
           done
-          docker compose logs athar
+          docker compose logs
           exit 1
 
       - name: Verify SQLite data survived restart
@@ -73,7 +84,7 @@ jobs:
           curl --fail --silent http://127.0.0.1:3000/api/state | grep -q 'docker-persistence-sentinel'
           echo 'SQLite persistence survived docker compose down/up.'
 
-      - name: Show network isolation metadata
+      - name: Show internal network metadata
         run: docker network inspect athar_govtech_internal
 
       - name: Cleanup
