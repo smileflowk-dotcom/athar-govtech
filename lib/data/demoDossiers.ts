@@ -1,3 +1,4 @@
+import { detectRankingAttributionInconsistency } from "../controls/rankingAttribution";
 import { detectProbityDeclarationSignals } from "../controls/probityDeclaration";
 import { detectPublicationDelay } from "../controls/publicationDelay";
 import { detectRestrictiveClause } from "../controls/restrictiveClause";
@@ -157,6 +158,57 @@ function buildProbityDossier(): Dossier {
   };
 }
 
+function buildRankingAttributionDossier(): Dossier {
+  const excerpt = [
+    "Grille finale de notation :",
+    "Atlas Services — 92 points",
+    "Rif Solutions — 84 points",
+    "Sahara Tech — 79 points",
+    "PV de commission : attributaire déclaré — Rif Solutions",
+  ].join("\n");
+
+  const result = detectRankingAttributionInconsistency({
+    grille_notation: [
+      { soumissionnaire: "Atlas Services", note_totale: 92 },
+      { soumissionnaire: "Rif Solutions", note_totale: 84 },
+      { soumissionnaire: "Sahara Tech", note_totale: 79 },
+    ],
+    soumissionnaire_attributaire: "Rif Solutions",
+    source_grille: "Grille fictive de notation — page 4",
+    source_pv: "PV fictif de commission — page 7",
+  });
+
+  return {
+    id: "ranking-attribution",
+    title: "Évaluation des offres — cohérence classement / attribution",
+    score: result.triggered ? 95 : 12,
+    excerpt,
+    sourceLabel: "Grille de notation + PV fictifs",
+    totalPages: 7,
+    activePage: 7,
+    realDocument: false,
+    alerts: result.triggered
+      ? [
+          {
+            id: "ranking-attribution-control",
+            type: "Incohérence entre notation, classement et attribution",
+            level: result.level,
+            rule: result.ruleReference,
+            expected: result.expected,
+            observed: `${result.observed} ${result.gap}`,
+            evidence: result.evidence,
+            action: result.recommendation,
+            page: 7,
+            highlight: excerpt,
+            status: "pending",
+            indicators: result.indicators,
+            generatedByControl: true,
+          },
+        ]
+      : [],
+  };
+}
+
 export const demoDossiers: Dossier[] = [
   buildDossier(
     "equipment",
@@ -172,4 +224,5 @@ export const demoDossiers: Dossier[] = [
   ),
   buildPublicationDelayDossier(),
   buildProbityDossier(),
+  buildRankingAttributionDossier(),
 ];
