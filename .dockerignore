@@ -1,0 +1,15 @@
+.git
+.github
+.next
+node_modules
+.env
+.env.*
+!.env.example
+.athar-data
+data/private
+uploads
+outputs
+*.db
+*.sqlite
+*.sqlite3
+npm-debug.log*

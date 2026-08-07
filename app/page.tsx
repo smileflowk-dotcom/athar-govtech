@@ -16,7 +16,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import { type ChangeEvent, useMemo, useState } from "react";
+import { type ChangeEvent, useEffect, useMemo, useState } from "react";
 import {
   demoDossiers,
   type AlertStatus,
@@ -42,6 +42,12 @@ const indicatorLabels: Record<string, string> = {
   "missing-probity-declaration": "Déclaration de probité absente ou non retrouvée",
 };
 
+type PersistedUiState = {
+  dossiers: Dossier[];
+  activeDossierId?: string | null;
+  activeAlertId?: string | null;
+};
+
 export default function Home() {
   const [dossiers, setDossiers] = useState(demoDossiers);
   const [activeDossierId, setActiveDossierId] = useState(demoDossiers[0].id);
@@ -52,6 +58,7 @@ export default function Home() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [pdfImporting, setPdfImporting] = useState(false);
   const [pdfError, setPdfError] = useState("");
+  const [persistenceReady, setPersistenceReady] = useState(false);
 
   const activeDossier =
     dossiers.find((dossier) => dossier.id === activeDossierId) ?? dossiers[0];
@@ -69,6 +76,59 @@ export default function Home() {
       ),
     [dossiers, query],
   );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function hydrateLocalState() {
+      try {
+        const response = await fetch("/api/state", { cache: "no-store" });
+        if (!response.ok) return;
+
+        const payload = (await response.json()) as { state?: PersistedUiState | null };
+        const state = payload.state;
+        if (!state || !Array.isArray(state.dossiers) || state.dossiers.length === 0 || cancelled) {
+          return;
+        }
+
+        setDossiers(state.dossiers);
+        const selectedDossier =
+          state.dossiers.find((dossier) => dossier.id === state.activeDossierId) ?? state.dossiers[0];
+        setActiveDossierId(selectedDossier.id);
+        const selectedAlert = selectedDossier.alerts.find(
+          (alert) => alert.id === state.activeAlertId,
+        );
+        setActiveAlertId(selectedAlert?.id ?? selectedDossier.alerts[0]?.id ?? null);
+      } catch {
+        // En développement hors Docker, SQLite peut ne pas être disponible.
+        // L'interface continue alors avec son état de démonstration en mémoire.
+      } finally {
+        if (!cancelled) setPersistenceReady(true);
+      }
+    }
+
+    void hydrateLocalState();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!persistenceReady) return;
+
+    const timeout = window.setTimeout(() => {
+      void fetch("/api/state", {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ dossiers, activeDossierId, activeAlertId }),
+      }).catch(() => {
+        // Le stockage persistant est une capacité de déploiement ; une indisponibilité
+        // locale ne doit pas bloquer le démonstrateur ni modifier les contrôles métier.
+      });
+    }, 250);
+
+    return () => window.clearTimeout(timeout);
+  }, [dossiers, activeDossierId, activeAlertId, persistenceReady]);
 
   function selectDossier(dossier: Dossier) {
     setActiveDossierId(dossier.id);
