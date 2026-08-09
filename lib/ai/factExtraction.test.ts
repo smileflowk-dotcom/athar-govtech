@@ -41,7 +41,7 @@ describe("extractFactsWithLocalAi", () => {
 
     expect(prompt).toContain("[P4-L3] Atlas Services — 92 points");
     expect(prompt).toContain("[P4-L4] Rif Solutions — 84 points");
-    expect(prompt).toContain("[P4-L5] Classement: 1. Atlas Services ; 2. Rif Solutions");
+    expect(prompt).toContain("[P4-L5] Classement : 1. Atlas Services ; 2. Rif Solutions");
     expect(prompt).not.toContain("[P4-L1] Page administrative sans intérêt.");
     expect(prompt).not.toContain("[P4-L2] Informations générales du marché.");
   });
