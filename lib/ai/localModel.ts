@@ -89,6 +89,8 @@ export class OllamaLocalModelClient implements LocalModelClient {
         options: {
           temperature: 0,
           num_ctx: 4096,
+          // Contrainte PoC : exécution CPU uniquement, même si une machine dispose d'un GPU.
+          num_gpu: 0,
         },
       }),
       signal: AbortSignal.timeout(120_000),
