@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extractFactsWithLocalAi } from "./factExtraction";
+import { buildFactExtractionPrompt, extractFactsWithLocalAi } from "./factExtraction";
 import type {
   JsonSchema,
   LocalModelClient,
@@ -24,6 +24,28 @@ class FakeLocalModelClient implements LocalModelClient {
 }
 
 describe("extractFactsWithLocalAi", () => {
+  it("pré-filtre les lignes de notation sans perdre les ancres du document original", () => {
+    const text = [
+      "Page administrative sans intérêt.",
+      "Informations générales du marché.",
+      "Atlas Services — 92 points",
+      "Rif Solutions — 84 points",
+      "Classement : 1. Atlas Services ; 2. Rif Solutions",
+      "Signature et date.",
+    ].join("\n");
+
+    const prompt = buildFactExtractionPrompt(
+      { document_source: "grille.pdf", pages: [{ page: 4, text }] },
+      ["note_soumissionnaire", "classement"],
+    );
+
+    expect(prompt).toContain("[P4-L3] Atlas Services — 92 points");
+    expect(prompt).toContain("[P4-L4] Rif Solutions — 84 points");
+    expect(prompt).toContain("[P4-L5] Classement: 1. Atlas Services ; 2. Rif Solutions");
+    expect(prompt).not.toContain("[P4-L1] Page administrative sans intérêt.");
+    expect(prompt).not.toContain("[P4-L2] Informations générales du marché.");
+  });
+
   it("extrait des notes claires et reconstruit la preuve exacte depuis l'ancre source", async () => {
     const text = [
       "Grille finale de notation :",
@@ -71,7 +93,7 @@ describe("extractFactsWithLocalAi", () => {
       origin: "ia_extraction",
     });
     expect(result.trace.prompt).toContain("P4-L2");
-    expect(result.trace.prompt_version).toBe("athar-fact-extraction-v3");
+    expect(result.trace.prompt_version).toBe("athar-fact-extraction-v4");
   });
 
   it("signale l'incertitude et rejette un fait dont l'ancre source est inventée", async () => {
