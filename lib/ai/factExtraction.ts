@@ -200,6 +200,9 @@ export async function extractFactsWithLocalAi(
     prompt,
     schema: extractionSchema(allowedTypes),
     system: SYSTEM_PROMPT,
+    // La grille peut émettre plusieurs notes + rangs. Le budget précédent de 192
+    // tokens pouvait couper le JSON avant sa fermeture sur le modèle 1.5B CPU.
+    maxTokens: 384,
   });
 
   const payload = isRecord(completion.json) ? completion.json : {};
