@@ -22,6 +22,7 @@ export interface LocalModelClient {
     prompt: string;
     schema: JsonSchema;
     system?: string;
+    maxTokens?: number;
   }): Promise<LocalModelCompletion>;
 }
 
@@ -78,6 +79,44 @@ function resolveTimeoutMs(rawValue: string | undefined): number {
   return Math.round(parsed);
 }
 
+function resolveMaxTokens(rawValue: number | undefined): number {
+  if (rawValue === undefined) return 256;
+  if (!Number.isFinite(rawValue)) return 256;
+  return Math.max(32, Math.min(512, Math.round(rawValue)));
+}
+
+function parseStructuredJson(raw: string): unknown {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    const unfenced = raw
+      .replace(/^```(?:json)?\s*/i, "")
+      .replace(/\s*```$/, "")
+      .trim();
+    if (unfenced !== raw) {
+      try {
+        return JSON.parse(unfenced);
+      } catch {
+        // Continue vers le dernier garde-fou ci-dessous.
+      }
+    }
+
+    const start = raw.indexOf("{");
+    const end = raw.lastIndexOf("}");
+    if (start >= 0 && end > start) {
+      try {
+        return JSON.parse(raw.slice(start, end + 1));
+      } catch {
+        // Le contenu reste invalide : l'appelant recevra une erreur explicite.
+      }
+    }
+  }
+
+  throw new LocalModelError(
+    "Le modèle local n'a pas respecté le format JSON structuré attendu.",
+  );
+}
+
 export class OllamaLocalModelClient implements LocalModelClient {
   readonly baseUrl: string;
   readonly model: string;
@@ -96,12 +135,12 @@ export class OllamaLocalModelClient implements LocalModelClient {
     prompt: string;
     schema: JsonSchema;
     system?: string;
+    maxTokens?: number;
   }): Promise<LocalModelCompletion> {
-    // Sur CPU lent, le coût principal observé est l'évaluation du prompt. Le PoC utilise
-    // /api/generate avec un prompt unique et compact plutôt que le gabarit conversationnel.
     const prompt = input.system
       ? `${input.system.trim()}\n${input.prompt.trim()}`
       : input.prompt.trim();
+    const maxTokens = resolveMaxTokens(input.maxTokens);
 
     const response = await fetch(`${this.baseUrl}/api/generate`, {
       method: "POST",
@@ -114,9 +153,8 @@ export class OllamaLocalModelClient implements LocalModelClient {
         keep_alive: "30m",
         options: {
           temperature: 0,
-          // Tranche ciblée : extraits grille/PV courts, pas documents complets.
           num_ctx: 1024,
-          num_predict: 192,
+          num_predict: maxTokens,
           // Contrainte PoC : exécution CPU uniquement, même si un GPU est disponible.
           num_gpu: 0,
         },
@@ -142,6 +180,7 @@ export class OllamaLocalModelClient implements LocalModelClient {
     const payload = (await response.json()) as {
       model?: string;
       response?: string;
+      done_reason?: string;
       total_duration?: number;
       load_duration?: number;
       prompt_eval_count?: number;
@@ -155,14 +194,13 @@ export class OllamaLocalModelClient implements LocalModelClient {
       throw new LocalModelError("Le modèle local n'a retourné aucun contenu exploitable.");
     }
 
-    let json: unknown;
-    try {
-      json = JSON.parse(raw);
-    } catch {
+    if (payload.done_reason === "length") {
       throw new LocalModelError(
-        "Le modèle local n'a pas respecté le format JSON structuré attendu.",
+        `La sortie JSON du modèle local a été tronquée à ${maxTokens} tokens avant sa fermeture.`,
       );
     }
+
+    const json = parseStructuredJson(raw);
 
     return {
       json,
