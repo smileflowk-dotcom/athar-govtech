@@ -5,7 +5,7 @@ import type {
   FactRelation,
 } from "./types";
 
-export const FACT_RECONCILIATION_PROMPT_VERSION = "athar-fact-reconciliation-v1";
+export const FACT_RECONCILIATION_PROMPT_VERSION = "athar-fact-reconciliation-v2";
 
 const RECONCILIATION_SCHEMA = {
   type: "object",
@@ -39,9 +39,12 @@ export function buildFactReconciliationPrompt(
     "- insuffisant : identité de la réalité, portée ou données trop ambiguës pour conclure.\n\n" +
     "Règles impératives :\n" +
     "1. Ne transforme jamais une similarité lexicale en certitude.\n" +
-    "2. Si les types de faits, acteurs ou contextes ne permettent pas un rapprochement fiable, retourne insuffisant.\n" +
-    "3. confidence mesure uniquement la confiance dans le rapprochement documentaire, pas un risque métier.\n" +
-    "4. La réponse ne doit contenir aucune qualification juridique.\n\n" +
+    "2. Deux mentions d'attributaire peuvent être rapprochées entre documents.\n" +
+    "3. Un fait classement avec rang = 1 peut être rapproché d'un attributaire déclaré : ils décrivent alors le candidat gagnant attendu et le candidat effectivement déclaré.\n" +
+    "4. Pour ce couple rang 1 / attributaire, compare l'identité du soumissionnaire : même identité = confirme ; identité différente = contredit ; identité incertaine = insuffisant.\n" +
+    "5. Pour tout autre couple dont les types, acteurs ou contextes ne permettent pas un rapprochement fiable, retourne insuffisant.\n" +
+    "6. confidence mesure uniquement la confiance dans le rapprochement documentaire, pas un risque métier.\n" +
+    "7. La réponse ne doit contenir aucune qualification juridique.\n\n" +
     `FAIT A\n${JSON.stringify(left, null, 2)}\n\n` +
     `FAIT B\n${JSON.stringify(right, null, 2)}`;
 }
