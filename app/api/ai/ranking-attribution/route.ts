@@ -11,18 +11,21 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function parseDocument(value: unknown, field: string): SourceDocumentText {
   if (!isRecord(value)) throw new Error(`${field} doit être un objet.`);
-  const documentSource = value.document_source;
+
+  // Le endpoint accepte directement soit le contrat PoC `document_source + pages`,
+  // soit la forme renvoyée par le pipeline PDF existant `filename + pages`.
+  const rawDocumentSource = value.document_source ?? value.filename;
   const pages = value.pages;
 
-  if (typeof documentSource !== "string" || !documentSource.trim()) {
-    throw new Error(`${field}.document_source est obligatoire.`);
+  if (typeof rawDocumentSource !== "string" || !rawDocumentSource.trim()) {
+    throw new Error(`${field}.document_source ou ${field}.filename est obligatoire.`);
   }
   if (!Array.isArray(pages) || pages.length === 0) {
     throw new Error(`${field}.pages doit contenir au moins une page.`);
   }
 
   return {
-    document_source: documentSource.trim(),
+    document_source: rawDocumentSource.trim(),
     pages: pages.map((pageValue, index) => {
       if (!isRecord(pageValue)) {
         throw new Error(`${field}.pages[${index}] doit être un objet.`);
