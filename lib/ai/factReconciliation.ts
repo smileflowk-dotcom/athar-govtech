@@ -65,6 +65,7 @@ export async function reconcileFactsWithLocalAi(
     prompt,
     schema: RECONCILIATION_SCHEMA,
     system: SYSTEM_PROMPT,
+    maxTokens: 96,
   });
 
   const payload = isRecord(completion.json) ? completion.json : {};
