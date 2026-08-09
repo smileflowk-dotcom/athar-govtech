@@ -70,8 +70,8 @@ describe("extractFactsWithLocalAi", () => {
       passage_exact: "Atlas Services — 92 points",
       origin: "ia_extraction",
     });
-    expect(result.trace.prompt).toContain("source_anchor");
-    expect(result.trace.prompt_version).toBe("athar-fact-extraction-v2");
+    expect(result.trace.prompt).toContain("P4-L2");
+    expect(result.trace.prompt_version).toBe("athar-fact-extraction-v3");
   });
 
   it("signale l'incertitude et rejette un fait dont l'ancre source est inventée", async () => {
