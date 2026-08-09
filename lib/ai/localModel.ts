@@ -24,6 +24,7 @@ export class LocalModelError extends Error {
 
 const DEFAULT_BASE_URL = "http://127.0.0.1:11434";
 const DEFAULT_MODEL = "qwen2.5:1.5b-instruct-q4_K_M";
+const DEFAULT_TIMEOUT_MS = 300_000;
 const ALLOWED_LOCAL_HOSTS = new Set([
   "localhost",
   "127.0.0.1",
@@ -56,16 +57,29 @@ function normalizeBaseUrl(rawValue: string): string {
   return url.toString().replace(/\/$/, "");
 }
 
+function resolveTimeoutMs(rawValue: string | undefined): number {
+  if (!rawValue) return DEFAULT_TIMEOUT_MS;
+  const parsed = Number(rawValue);
+  if (!Number.isFinite(parsed) || parsed < 30_000 || parsed > 900_000) {
+    throw new LocalModelError(
+      "ATHAR_LOCAL_MODEL_TIMEOUT_MS doit être compris entre 30000 et 900000 ms.",
+    );
+  }
+  return Math.round(parsed);
+}
+
 export class OllamaLocalModelClient implements LocalModelClient {
   readonly baseUrl: string;
   readonly model: string;
+  readonly timeoutMs: number;
 
-  constructor(options?: { baseUrl?: string; model?: string }) {
+  constructor(options?: { baseUrl?: string; model?: string; timeoutMs?: number }) {
     this.baseUrl = normalizeBaseUrl(
       options?.baseUrl ?? process.env.ATHAR_LOCAL_MODEL_URL ?? DEFAULT_BASE_URL,
     );
-    this.model =
-      options?.model ?? process.env.ATHAR_LOCAL_MODEL ?? DEFAULT_MODEL;
+    this.model = options?.model ?? process.env.ATHAR_LOCAL_MODEL ?? DEFAULT_MODEL;
+    this.timeoutMs =
+      options?.timeoutMs ?? resolveTimeoutMs(process.env.ATHAR_LOCAL_MODEL_TIMEOUT_MS);
   }
 
   async completeJson(input: {
@@ -80,23 +94,27 @@ export class OllamaLocalModelClient implements LocalModelClient {
         model: this.model,
         stream: false,
         format: input.schema,
+        keep_alive: "10m",
         messages: [
-          ...(input.system
-            ? [{ role: "system", content: input.system }]
-            : []),
+          ...(input.system ? [{ role: "system", content: input.system }] : []),
           { role: "user", content: input.prompt },
         ],
         options: {
           temperature: 0,
           num_ctx: 4096,
+          num_predict: 1024,
           // Contrainte PoC : exécution CPU uniquement, même si une machine dispose d'un GPU.
           num_gpu: 0,
         },
       }),
-      signal: AbortSignal.timeout(120_000),
+      signal: AbortSignal.timeout(this.timeoutMs),
     }).catch((error) => {
+      const details = error instanceof Error ? error.message : String(error);
+      const timedOut = /timeout|aborted/i.test(details);
       throw new LocalModelError(
-        `Runtime IA local indisponible : ${error instanceof Error ? error.message : String(error)}`,
+        timedOut
+          ? `Le modèle local n'a pas répondu dans le délai de ${Math.round(this.timeoutMs / 1000)} s. Sur CPU, le premier chargement peut être lent ; vérifier Ollama puis relancer.`
+          : `Runtime IA local indisponible : ${details}`,
       );
     });
 
