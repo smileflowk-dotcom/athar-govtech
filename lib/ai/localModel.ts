@@ -101,8 +101,10 @@ export class OllamaLocalModelClient implements LocalModelClient {
         ],
         options: {
           temperature: 0,
-          num_ctx: 4096,
-          num_predict: 1024,
+          // Budget volontairement compact pour le PoC CPU : les extraits transmis sont
+          // ciblés (grille/PV), pas des documents complets.
+          num_ctx: 2048,
+          num_predict: 512,
           // Contrainte PoC : exécution CPU uniquement, même si une machine dispose d'un GPU.
           num_gpu: 0,
         },
