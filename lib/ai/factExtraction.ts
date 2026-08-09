@@ -6,7 +6,7 @@ import type {
   SourceDocumentText,
 } from "./types";
 
-export const FACT_EXTRACTION_PROMPT_VERSION = "athar-fact-extraction-v3";
+export const FACT_EXTRACTION_PROMPT_VERSION = "athar-fact-extraction-v4";
 
 const FACT_TYPES: AiFactType[] = [
   "note_soumissionnaire",
@@ -73,6 +73,57 @@ function buildSourceAnchors(document: SourceDocumentText): SourceAnchor[] {
   return anchors;
 }
 
+/**
+ * Pré-filtrage déterministe avant LLM.
+ *
+ * Le modèle local n'a pas vocation à relire toute la page : on lui transmet
+ * uniquement les lignes plausiblement pertinentes pour le scénario ciblé.
+ * Les ancres restent celles du document original afin que la preuve finale
+ * soit reconstruite depuis la source complète, jamais depuis la sortie IA.
+ */
+function selectCandidateAnchors(
+  anchors: SourceAnchor[],
+  allowedTypes: AiFactType[],
+): SourceAnchor[] {
+  const selected = new Map<string, SourceAnchor>();
+
+  const noteOrRanking = allowedTypes.includes("note_soumissionnaire") || allowedTypes.includes("classement");
+  const awardee = allowedTypes.includes("attributaire_declare");
+
+  for (const anchor of anchors) {
+    const text = anchor.passage.toLocaleLowerCase("fr");
+
+    const explicitAwardee =
+      awardee &&
+      /attributaire|attributairement|adjudicataire|titulaire|offre\s+(?:retenue|gagnante)|soumissionnaire\s+retenu|déclaré\s+attributaire|declare\s+attributaire/.test(text);
+
+    const rankingSignal =
+      noteOrRanking &&
+      /classement|rang|note|points?|score|total|moyenne|évaluation|evaluation|notation/.test(text);
+
+    // Les lignes tabulaires de notation contiennent souvent le nom + une valeur
+    // sans mot-clé métier. Un signal numérique simple permet de les conserver.
+    const numericTableSignal =
+      noteOrRanking &&
+      /\d+(?:[.,]\d+)?\s*(?:points?|\/\s*\d+)?/i.test(anchor.passage) &&
+      /[A-Za-zÀ-ÿ]{2,}/.test(anchor.passage);
+
+    if (explicitAwardee || rankingSignal || numericTableSignal) {
+      selected.set(anchor.anchor, anchor);
+    }
+  }
+
+  // Si aucun candidat n'a été trouvé, on laisse au modèle une petite fenêtre
+  // de secours plutôt que de fabriquer un fait à partir d'une page vide.
+  if (selected.size === 0) {
+    for (const anchor of anchors.slice(0, 12)) selected.set(anchor.anchor, anchor);
+  }
+
+  // Le scénario PoC reste volontairement borné : même une page très longue ne
+  // doit pas envoyer des centaines de lignes au petit modèle CPU.
+  return [...selected.values()].slice(0, 80);
+}
+
 function typeInstruction(type: AiFactType): string {
   if (type === "note_soumissionnaire") return "note: valeur=nom, note=note finale, rang=null";
   if (type === "classement") return "classement: valeur=nom, rang=rang explicite, note=null";
@@ -83,7 +134,8 @@ export function buildFactExtractionPrompt(
   document: SourceDocumentText,
   allowedTypes: AiFactType[] = FACT_TYPES,
 ): string {
-  const anchors = buildSourceAnchors(document);
+  const allAnchors = buildSourceAnchors(document);
+  const anchors = selectCandidateAnchors(allAnchors, allowedTypes);
   const sourceLines = anchors.map((item) => `[${item.anchor}] ${item.passage}`).join("\n");
   const tasks = allowedTypes.map(typeInstruction).join("; ");
 
@@ -91,8 +143,8 @@ export function buildFactExtractionPrompt(
     `V=${FACT_EXTRACTION_PROMPT_VERSION}`,
     `DOC=${document.document_source}`,
     `Extrais seulement les faits explicites suivants: ${tasks}.`,
-    "Chaque fait cite une ancre [P?-L?] existante. Ambigu = omettre le fait et renseigner uncertainty. Ne déduis rien.",
-    "SOURCES:",
+    "Le texte ci-dessous est un pré-filtrage local. Une ancre doit exister exactement dans la source originale. Ambigu = omettre le fait et renseigner uncertainty. Ne déduis rien.",
+    "SOURCES CANDIDATES:",
     sourceLines,
   ].join("\n");
 }
