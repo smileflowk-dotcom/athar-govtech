@@ -6,12 +6,13 @@ Cette tranche verticale est une **preuve de concept ciblée**, pas un moteur d'e
 
 Elle démontre uniquement le chemin :
 
-`texte grille + texte PV → faits sourcés par IA locale → rapprochements prudents → contrôle déterministe existant → preuve`
+`texte grille + texte PV → pré-filtrage local → faits sourcés par IA locale → rapprochements prudents → contrôle déterministe existant → preuve`
 
 Le scénario est limité au contrôle déjà présent **cohérence notation / classement / attribution**.
 
 ## Responsabilités
 
+- **Pré-filtrage déterministe** : réduire localement le texte transmis au petit modèle sans modifier la source de référence.
 - **IA locale — extraction** : notes par soumissionnaire, rangs explicitement présents et attributaire déclaré.
 - **IA locale — rapprochement** : `confirme`, `contredit` ou `insuffisant`, avec confiance explicite.
 - **Déterministe** : recalcul du classement et comparaison avec l'attributaire via `detectRankingAttributionInconsistency` ; aucune duplication de cette logique.
@@ -25,7 +26,18 @@ Chaque fait IA retenu conserve obligatoirement :
 - confiance d'extraction ;
 - version du prompt.
 
-Un garde-fou rejette tout fait dont `passage_exact` n'existe pas à l'identique dans la page source fournie au modèle.
+Un garde-fou rejette tout fait dont l'ancre source n'existe pas dans le document original. Le passage exact est ensuite reconstruit par ATHAR depuis la source originale, jamais repris du texte généré par le modèle.
+
+## Pré-filtrage local
+
+Le PoC ne transmet plus systématiquement tout le texte d'une page au LLM. Avant l'appel IA, ATHAR sélectionne localement les lignes contenant des signaux pertinents pour le scénario : notes, points, classement/rang, ou mentions d'attributaire. Les ancres restent celles du document original (`P4-L12`, etc.).
+
+Cette étape est volontairement déterministe : elle ne produit aucune conclusion métier et ne remplace pas la preuve source.
+
+Le but est double :
+
+1. réduire le temps d'inférence CPU du modèle 1.5B ;
+2. conserver la traçabilité exacte des faits retenus.
 
 ## Runtime local
 
@@ -93,13 +105,14 @@ La réponse distingue explicitement :
 
 Les prompts sont versionnés et conservés dans le code :
 
-- `FACT_EXTRACTION_PROMPT_VERSION = athar-fact-extraction-v1` ;
-- `FACT_RECONCILIATION_PROMPT_VERSION = athar-fact-reconciliation-v1`.
+- `FACT_EXTRACTION_PROMPT_VERSION = athar-fact-extraction-v4` ;
+- `FACT_RECONCILIATION_PROMPT_VERSION = athar-fact-reconciliation-v3`.
 
 Le prompt exact utilisé est inclus dans la trace d'exécution retournée par les fonctions internes. Les prompts imposent notamment :
 
 - aucune invention de donnée absente ;
-- passage source exact obligatoire ;
+- ancre source obligatoire ;
+- vérification de l'ancre contre le document original ;
 - `insuffisant` en cas d'ambiguïté ;
 - aucune qualification juridique.
 
@@ -121,6 +134,7 @@ Ces capacités relèvent de la trajectoire du PoC institutionnel. Ici, la priori
 
 Les tests unitaires couvrent :
 
+- pré-filtrage déterministe des lignes pertinentes ;
 - extraction de notes claires ;
 - rejet d'un fait dont la preuve source est absente et conservation de l'incertitude ;
 - rapprochement `confirme` ;
