@@ -24,7 +24,7 @@ class FakeLocalModelClient implements LocalModelClient {
 }
 
 describe("extractFactsWithLocalAi", () => {
-  it("extrait des notes claires avec source, page et passage exact", async () => {
+  it("extrait des notes claires et reconstruit la preuve exacte depuis l'ancre source", async () => {
     const text = [
       "Grille finale de notation :",
       "Atlas Services — 92 points",
@@ -44,9 +44,7 @@ describe("extractFactsWithLocalAi", () => {
             valeur: "Atlas Services",
             note: 92,
             rang: null,
-            document_source: "grille.pdf",
-            page: 4,
-            passage_exact: "Atlas Services — 92 points",
+            source_anchor: "P4-L2",
             confidence: 0.98,
           },
           {
@@ -54,9 +52,7 @@ describe("extractFactsWithLocalAi", () => {
             valeur: "Rif Solutions",
             note: 84,
             rang: null,
-            document_source: "grille.pdf",
-            page: 4,
-            passage_exact: "Rif Solutions — 84 points",
+            source_anchor: "P4-L3",
             confidence: 0.97,
           },
         ],
@@ -74,11 +70,11 @@ describe("extractFactsWithLocalAi", () => {
       passage_exact: "Atlas Services — 92 points",
       origin: "ia_extraction",
     });
-    expect(result.trace.prompt).toContain("Ne déduis jamais");
-    expect(result.trace.prompt_version).toBe("athar-fact-extraction-v1");
+    expect(result.trace.prompt).toContain("source_anchor");
+    expect(result.trace.prompt_version).toBe("athar-fact-extraction-v2");
   });
 
-  it("signale l'incertitude et rejette une valeur dont le passage source est inventé", async () => {
+  it("signale l'incertitude et rejette un fait dont l'ancre source est inventée", async () => {
     const result = await extractFactsWithLocalAi(
       {
         document_source: "pv.pdf",
@@ -96,9 +92,7 @@ describe("extractFactsWithLocalAi", () => {
             valeur: "Atlas Services",
             note: null,
             rang: null,
-            document_source: "pv.pdf",
-            page: 7,
-            passage_exact: "Attributaire : Atlas Services",
+            source_anchor: "P7-L99",
             confidence: 0.61,
           },
         ],
@@ -108,6 +102,7 @@ describe("extractFactsWithLocalAi", () => {
 
     expect(result.facts).toEqual([]);
     expect(result.rejected_facts).toHaveLength(1);
+    expect(result.rejected_facts[0].reason).toContain("n'existe pas");
     expect(result.uncertainty).toContain("Aucun attributaire");
   });
 });
