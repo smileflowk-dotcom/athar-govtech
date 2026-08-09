@@ -1,10 +1,20 @@
 export type JsonSchema = Record<string, unknown>;
 
+export type LocalModelMetrics = {
+  total_duration_ns?: number;
+  load_duration_ns?: number;
+  prompt_eval_count?: number;
+  prompt_eval_duration_ns?: number;
+  eval_count?: number;
+  eval_duration_ns?: number;
+};
+
 export type LocalModelCompletion = {
   json: unknown;
   raw: string;
   model: string;
   provider: "ollama-local" | "test-double";
+  metrics?: LocalModelMetrics;
 };
 
 export interface LocalModelClient {
@@ -87,25 +97,27 @@ export class OllamaLocalModelClient implements LocalModelClient {
     schema: JsonSchema;
     system?: string;
   }): Promise<LocalModelCompletion> {
-    const response = await fetch(`${this.baseUrl}/api/chat`, {
+    // Sur CPU lent, le coût principal observé est l'évaluation du prompt. Le PoC utilise
+    // /api/generate avec un prompt unique et compact plutôt que le gabarit conversationnel.
+    const prompt = input.system
+      ? `${input.system.trim()}\n${input.prompt.trim()}`
+      : input.prompt.trim();
+
+    const response = await fetch(`${this.baseUrl}/api/generate`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         model: this.model,
+        prompt,
         stream: false,
         format: input.schema,
-        keep_alive: "10m",
-        messages: [
-          ...(input.system ? [{ role: "system", content: input.system }] : []),
-          { role: "user", content: input.prompt },
-        ],
+        keep_alive: "30m",
         options: {
           temperature: 0,
-          // Budget volontairement compact pour le PoC CPU : les extraits transmis sont
-          // ciblés (grille/PV), pas des documents complets.
-          num_ctx: 2048,
-          num_predict: 512,
-          // Contrainte PoC : exécution CPU uniquement, même si une machine dispose d'un GPU.
+          // Tranche ciblée : extraits grille/PV courts, pas documents complets.
+          num_ctx: 1024,
+          num_predict: 192,
+          // Contrainte PoC : exécution CPU uniquement, même si un GPU est disponible.
           num_gpu: 0,
         },
       }),
@@ -115,7 +127,7 @@ export class OllamaLocalModelClient implements LocalModelClient {
       const timedOut = /timeout|aborted/i.test(details);
       throw new LocalModelError(
         timedOut
-          ? `Le modèle local n'a pas répondu dans le délai de ${Math.round(this.timeoutMs / 1000)} s. Sur CPU, le premier chargement peut être lent ; vérifier Ollama puis relancer.`
+          ? `Le modèle local n'a pas répondu dans le délai de ${Math.round(this.timeoutMs / 1000)} s. Le PoC est configuré pour CPU ; vérifier la taille du prompt et les métriques Ollama.`
           : `Runtime IA local indisponible : ${details}`,
       );
     });
@@ -129,9 +141,15 @@ export class OllamaLocalModelClient implements LocalModelClient {
 
     const payload = (await response.json()) as {
       model?: string;
-      message?: { content?: string };
+      response?: string;
+      total_duration?: number;
+      load_duration?: number;
+      prompt_eval_count?: number;
+      prompt_eval_duration?: number;
+      eval_count?: number;
+      eval_duration?: number;
     };
-    const raw = payload.message?.content?.trim();
+    const raw = payload.response?.trim();
 
     if (!raw) {
       throw new LocalModelError("Le modèle local n'a retourné aucun contenu exploitable.");
@@ -151,6 +169,14 @@ export class OllamaLocalModelClient implements LocalModelClient {
       raw,
       model: payload.model ?? this.model,
       provider: "ollama-local",
+      metrics: {
+        total_duration_ns: payload.total_duration,
+        load_duration_ns: payload.load_duration,
+        prompt_eval_count: payload.prompt_eval_count,
+        prompt_eval_duration_ns: payload.prompt_eval_duration,
+        eval_count: payload.eval_count,
+        eval_duration_ns: payload.eval_duration,
+      },
     };
   }
 }
