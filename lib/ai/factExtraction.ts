@@ -6,7 +6,7 @@ import type {
   SourceDocumentText,
 } from "./types";
 
-export const FACT_EXTRACTION_PROMPT_VERSION = "athar-fact-extraction-v2";
+export const FACT_EXTRACTION_PROMPT_VERSION = "athar-fact-extraction-v3";
 
 const FACT_TYPES: AiFactType[] = [
   "note_soumissionnaire",
@@ -14,43 +14,41 @@ const FACT_TYPES: AiFactType[] = [
   "attributaire_declare",
 ];
 
-const FACT_EXTRACTION_SCHEMA = {
-  type: "object",
-  additionalProperties: false,
-  properties: {
-    facts: {
-      type: "array",
-      items: {
-        type: "object",
-        additionalProperties: false,
-        properties: {
-          type_fait: { type: "string", enum: FACT_TYPES },
-          valeur: { type: "string" },
-          note: { anyOf: [{ type: "number" }, { type: "null" }] },
-          rang: { anyOf: [{ type: "integer" }, { type: "null" }] },
-          source_anchor: { type: "string" },
-          confidence: { type: "number", minimum: 0, maximum: 1 },
+function extractionSchema(allowedTypes: AiFactType[]) {
+  return {
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      facts: {
+        type: "array",
+        items: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            type_fait: { type: "string", enum: allowedTypes },
+            valeur: { type: "string" },
+            note: { anyOf: [{ type: "number" }, { type: "null" }] },
+            rang: { anyOf: [{ type: "integer" }, { type: "null" }] },
+            source_anchor: { type: "string" },
+            confidence: { type: "number", minimum: 0, maximum: 1 },
+          },
+          required: [
+            "type_fait",
+            "valeur",
+            "note",
+            "rang",
+            "source_anchor",
+            "confidence",
+          ],
         },
-        required: [
-          "type_fait",
-          "valeur",
-          "note",
-          "rang",
-          "source_anchor",
-          "confidence",
-        ],
       },
+      uncertainty: { anyOf: [{ type: "string" }, { type: "null" }] },
     },
-    uncertainty: { anyOf: [{ type: "string" }, { type: "null" }] },
-  },
-  required: ["facts", "uncertainty"],
-} satisfies Record<string, unknown>;
+    required: ["facts", "uncertainty"],
+  } satisfies Record<string, unknown>;
+}
 
-const SYSTEM_PROMPT = [
-  "Tu es un extracteur factuel local pour ATHAR, outil d'assistance au contrôle des marchés publics.",
-  "Tu ne qualifies jamais juridiquement une situation et tu n'inventes jamais une donnée absente.",
-  "Tu extrais uniquement des faits explicitement présents dans les lignes sources fournies.",
-].join(" ");
+const SYSTEM_PROMPT = "Extraction factuelle stricte. Aucun ajout. Aucune conclusion juridique.";
 
 type SourceAnchor = {
   anchor: string;
@@ -75,31 +73,28 @@ function buildSourceAnchors(document: SourceDocumentText): SourceAnchor[] {
   return anchors;
 }
 
-export function buildFactExtractionPrompt(document: SourceDocumentText): string {
-  const anchors = buildSourceAnchors(document);
-  const sourceLines = anchors
-    .map((item) => `[${item.anchor}] ${item.passage}`)
-    .join("\n");
+function typeInstruction(type: AiFactType): string {
+  if (type === "note_soumissionnaire") return "note: valeur=nom, note=note finale, rang=null";
+  if (type === "classement") return "classement: valeur=nom, rang=rang explicite, note=null";
+  return "attributaire: valeur=nom explicitement déclaré, note=null, rang=null";
+}
 
-  return `PROMPT_VERSION=${FACT_EXTRACTION_PROMPT_VERSION}\n\n` +
-    `Document source : ${document.document_source}\n\n` +
-    "Objectif : extraire uniquement les faits utiles au scénario PoC grille de notation + PV.\n" +
-    "Types autorisés :\n" +
-    "- note_soumissionnaire : valeur = nom du soumissionnaire, note = note finale explicitement indiquée ;\n" +
-    "- classement : valeur = nom du soumissionnaire, rang = rang explicitement indiqué ;\n" +
-    "- attributaire_declare : valeur = nom de l'attributaire explicitement déclaré.\n\n" +
-    "Règles impératives :\n" +
-    "1. Ne déduis jamais une note, un classement ou un attributaire à partir d'indices incomplets.\n" +
-    "2. Si une information est ambiguë, n'émets pas le fait concerné et explique l'incertitude dans uncertainty.\n" +
-    "3. Chaque fait doit citer exactement un source_anchor présent dans le texte ci-dessous.\n" +
-    "4. Ne recopie pas le passage source : ATHAR le reconstruira lui-même à partir de source_anchor.\n" +
-    "5. confidence exprime uniquement la confiance d'extraction factuelle, jamais un risque métier.\n" +
-    "6. Pour note_soumissionnaire, note doit être renseignée et rang doit être null.\n" +
-    "7. Pour classement, rang doit être renseigné et note doit être null.\n" +
-    "8. Pour attributaire_declare, note et rang doivent être null.\n" +
-    "9. Une même ligne peut soutenir plusieurs faits distincts si elle les énonce explicitement.\n\n" +
-    "Lignes sources à analyser :\n\n" +
-    sourceLines;
+export function buildFactExtractionPrompt(
+  document: SourceDocumentText,
+  allowedTypes: AiFactType[] = FACT_TYPES,
+): string {
+  const anchors = buildSourceAnchors(document);
+  const sourceLines = anchors.map((item) => `[${item.anchor}] ${item.passage}`).join("\n");
+  const tasks = allowedTypes.map(typeInstruction).join("; ");
+
+  return [
+    `V=${FACT_EXTRACTION_PROMPT_VERSION}`,
+    `DOC=${document.document_source}`,
+    `Extrais seulement les faits explicites suivants: ${tasks}.`,
+    "Chaque fait cite une ancre [P?-L?] existante. Ambigu = omettre le fait et renseigner uncertainty. Ne déduis rien.",
+    "SOURCES:",
+    sourceLines,
+  ].join("\n");
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -115,13 +110,14 @@ function validateRawFact(
   raw: unknown,
   document: SourceDocumentText,
   anchors: Map<string, SourceAnchor>,
+  allowedTypes: AiFactType[],
   index: number,
 ): { fact?: ExtractedFact; reason?: string } {
   if (!isRecord(raw)) return { reason: "Fait IA non structuré." };
 
   const type = raw.type_fait;
-  if (typeof type !== "string" || !FACT_TYPES.includes(type as AiFactType)) {
-    return { reason: "Type de fait IA non autorisé." };
+  if (typeof type !== "string" || !allowedTypes.includes(type as AiFactType)) {
+    return { reason: "Type de fait IA non autorisé pour ce document." };
   }
 
   const sourceAnchor = raw.source_anchor;
@@ -157,9 +153,7 @@ function validateRawFact(
   }
 
   if (type === "attributaire_declare" && (note !== null || rang !== null)) {
-    return {
-      reason: "Un fait attributaire ne doit pas contenir de note ou de rang.",
-    };
+    return { reason: "Un fait attributaire ne doit pas contenir de note ou de rang." };
   }
 
   return {
@@ -169,8 +163,7 @@ function validateRawFact(
       valeur,
       note: typeof note === "number" ? note : null,
       rang: typeof rang === "number" ? rang : null,
-      // Provenance forte : la page et le passage exact ne sont jamais repris du texte
-      // généré par le modèle. Ils sont reconstruits à partir d'une ancre source existante.
+      // La preuve n'est jamais reprise du texte généré : ATHAR la reconstruit depuis l'ancre.
       document_source: document.document_source,
       page: source.page,
       passage_exact: source.passage,
@@ -184,12 +177,16 @@ function validateRawFact(
 export async function extractFactsWithLocalAi(
   document: SourceDocumentText,
   client: LocalModelClient,
+  allowedTypes: AiFactType[] = FACT_TYPES,
 ): Promise<FactExtractionResult> {
   if (!document.document_source.trim()) {
     throw new Error("Le nom du document source est obligatoire.");
   }
   if (!Array.isArray(document.pages) || document.pages.length === 0) {
     throw new Error("Le document doit contenir au moins une page de texte.");
+  }
+  if (allowedTypes.length === 0 || allowedTypes.some((type) => !FACT_TYPES.includes(type))) {
+    throw new Error("Au moins un type de fait autorisé est requis.");
   }
 
   const sourceAnchors = buildSourceAnchors(document);
@@ -198,10 +195,10 @@ export async function extractFactsWithLocalAi(
   }
 
   const anchorMap = new Map(sourceAnchors.map((item) => [item.anchor, item]));
-  const prompt = buildFactExtractionPrompt(document);
+  const prompt = buildFactExtractionPrompt(document, allowedTypes);
   const completion = await client.completeJson({
     prompt,
-    schema: FACT_EXTRACTION_SCHEMA,
+    schema: extractionSchema(allowedTypes),
     system: SYSTEM_PROMPT,
   });
 
@@ -211,7 +208,7 @@ export async function extractFactsWithLocalAi(
   const facts: ExtractedFact[] = [];
 
   rawFacts.forEach((raw, index) => {
-    const validation = validateRawFact(raw, document, anchorMap, index);
+    const validation = validateRawFact(raw, document, anchorMap, allowedTypes, index);
     if (validation.fact) facts.push(validation.fact);
     else rejected_facts.push({ reason: validation.reason ?? "Fait IA rejeté.", raw });
   });
