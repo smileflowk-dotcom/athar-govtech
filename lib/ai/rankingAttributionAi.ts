@@ -110,10 +110,6 @@ function buildRankingInputFromFacts(
   };
 }
 
-/**
- * Le PoC ne rapproche pas arbitrairement tous les faits entre eux : il cible uniquement
- * les relations utiles au scénario classement/attribution afin de limiter les appels IA.
- */
 function candidatePairs(
   gridFacts: ExtractedFact[],
   pvFacts: ExtractedFact[],
@@ -121,7 +117,6 @@ function candidatePairs(
   const pairs: Array<[ExtractedFact, ExtractedFact]> = [];
   const pvAwardees = pvFacts.filter((fact) => fact.type_fait === "attributaire_declare");
 
-  // 1. Cas le plus utile : premier du classement dans la grille versus attributaire du PV.
   const gridWinners = gridFacts.filter(
     (fact) => fact.type_fait === "classement" && fact.rang === 1,
   );
@@ -132,32 +127,30 @@ function candidatePairs(
     }
   }
 
-  // 2. Si la grille mentionne elle-même un attributaire, comparer les deux mentions.
-  const gridAwardees = gridFacts.filter((fact) => fact.type_fait === "attributaire_declare");
-  for (const gridAwardee of gridAwardees) {
-    for (const pvAwardee of pvAwardees) {
-      pairs.push([gridAwardee, pvAwardee]);
-      if (pairs.length >= MAX_RECONCILIATIONS) return pairs;
-    }
-  }
-
   return pairs;
 }
 
 /**
  * Tranche verticale PoC : texte grille + texte PV -> faits sourcés par IA locale ->
- * rapprochements IA prudents -> alimentation du contrôle déterministe existant.
- *
- * La logique de classement n'est pas dupliquée ici : dès que les faits sont jugés
- * suffisants, `detectRankingAttributionInconsistency` reste l'unique moteur métier.
+ * rapprochement IA ciblé -> alimentation du contrôle déterministe existant.
  */
 export async function analyzeRankingAttributionWithLocalAi(input: {
   grille: SourceDocumentText;
   pv: SourceDocumentText;
   client: LocalModelClient;
 }): Promise<AiRankingAttributionAnalysis> {
-  const gridExtraction = await extractFactsWithLocalAi(input.grille, input.client);
-  const pvExtraction = await extractFactsWithLocalAi(input.pv, input.client);
+  // Les prompts sont spécialisés par document pour réduire fortement le coût CPU :
+  // la grille ne cherche que notes/rangs ; le PV ne cherche que l'attributaire déclaré.
+  const gridExtraction = await extractFactsWithLocalAi(
+    input.grille,
+    input.client,
+    ["note_soumissionnaire", "classement"],
+  );
+  const pvExtraction = await extractFactsWithLocalAi(
+    input.pv,
+    input.client,
+    ["attributaire_declare"],
+  );
 
   const rapprochements: FactReconciliationResult[] = [];
   for (const [left, right] of candidatePairs(gridExtraction.facts, pvExtraction.facts)) {
