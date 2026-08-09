@@ -28,10 +28,11 @@ class QueueLocalModelClient implements LocalModelClient {
 }
 
 describe("analyzeRankingAttributionWithLocalAi", () => {
-  it("alimente sans duplication le contrôle déterministe existant", async () => {
+  it("alimente le contrôle existant et rapproche le premier classé de l'attributaire", async () => {
     const gridText = [
       "Atlas Services — 92 points",
       "Rif Solutions — 84 points",
+      "Classement : 1. Atlas Services ; 2. Rif Solutions",
     ].join("\n");
     const pvText = "Attributaire déclaré : Rif Solutions";
 
@@ -52,9 +53,7 @@ describe("analyzeRankingAttributionWithLocalAi", () => {
               valeur: "Atlas Services",
               note: 92,
               rang: null,
-              document_source: "grille.pdf",
-              page: 4,
-              passage_exact: "Atlas Services — 92 points",
+              source_anchor: "P4-L1",
               confidence: 0.98,
             },
             {
@@ -62,10 +61,16 @@ describe("analyzeRankingAttributionWithLocalAi", () => {
               valeur: "Rif Solutions",
               note: 84,
               rang: null,
-              document_source: "grille.pdf",
-              page: 4,
-              passage_exact: "Rif Solutions — 84 points",
+              source_anchor: "P4-L2",
               confidence: 0.97,
+            },
+            {
+              type_fait: "classement",
+              valeur: "Atlas Services",
+              note: null,
+              rang: 1,
+              source_anchor: "P4-L3",
+              confidence: 0.96,
             },
           ],
           uncertainty: null,
@@ -77,13 +82,16 @@ describe("analyzeRankingAttributionWithLocalAi", () => {
               valeur: "Rif Solutions",
               note: null,
               rang: null,
-              document_source: "pv.pdf",
-              page: 7,
-              passage_exact: pvText,
+              source_anchor: "P7-L1",
               confidence: 0.99,
             },
           ],
           uncertainty: null,
+        },
+        {
+          relation: "contredit",
+          confidence: 0.96,
+          reason: "Le premier classé est Atlas Services alors que le PV déclare Rif Solutions attributaire.",
         },
       ]),
     });
@@ -93,6 +101,8 @@ describe("analyzeRankingAttributionWithLocalAi", () => {
       { soumissionnaire: "Atlas Services", note_totale: 92 },
       { soumissionnaire: "Rif Solutions", note_totale: 84 },
     ]);
+    expect(result.rapprochements).toHaveLength(1);
+    expect(result.rapprochements[0].relation).toBe("contredit");
     expect(result.deterministic_result?.triggered).toBe(true);
     expect(result.deterministic_result?.topBidders).toEqual(["Atlas Services"]);
     expect(result.deterministic_result?.evidence).toContain("Extraction IA vérifiée");
