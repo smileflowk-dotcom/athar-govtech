@@ -27,11 +27,21 @@ export type SourceDocumentText = {
   pages: SourcePage[];
 };
 
+export type AiModelMetrics = {
+  total_duration_ns?: number;
+  load_duration_ns?: number;
+  prompt_eval_count?: number;
+  prompt_eval_duration_ns?: number;
+  eval_count?: number;
+  eval_duration_ns?: number;
+};
+
 export type AiModelTrace = {
   provider: "ollama-local" | "test-double";
   model: string;
   prompt_version: string;
   prompt: string;
+  metrics?: AiModelMetrics;
 };
 
 export type FactExtractionResult = {
