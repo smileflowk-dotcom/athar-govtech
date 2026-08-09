@@ -35,7 +35,11 @@ function FactCard({ fact }: { fact: ExtractedFact }) {
   return (
     <article style={{ border: "1px solid #d9dde5", borderRadius: 10, padding: 12, marginBottom: 10 }}>
       <strong>{fact.type_fait}</strong>
-      <div>Valeur : {fact.valeur}{fact.note !== null ? ` — note ${fact.note}` : ""}{fact.rang !== null ? ` — rang ${fact.rang}` : ""}</div>
+      <div>
+        Valeur : {fact.valeur}
+        {fact.note !== null ? ` — note ${fact.note}` : ""}
+        {fact.rang !== null ? ` — rang ${fact.rang}` : ""}
+      </div>
       <div style={{ fontSize: 13, marginTop: 6 }}>
         <b>IA extraction</b> · confiance {confidence(fact.confidence)} · {fact.document_source} · page {fact.page}
       </div>
@@ -59,6 +63,10 @@ function RelationCard({ relation }: { relation: FactReconciliationResult }) {
 export default function AiRankingPocPage() {
   const [gridText, setGridText] = useState(DEFAULT_GRID);
   const [pvText, setPvText] = useState(DEFAULT_PV);
+  const [gridSource, setGridSource] = useState("grille-notation-poc.txt");
+  const [pvSource, setPvSource] = useState("pv-commission-poc.txt");
+  const [gridPage, setGridPage] = useState(4);
+  const [pvPage, setPvPage] = useState(7);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ApiResponse | null>(null);
   const [error, setError] = useState("");
@@ -74,12 +82,12 @@ export default function AiRankingPocPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           grille: {
-            document_source: "grille-notation-poc.txt",
-            pages: [{ page: 4, text: gridText }],
+            document_source: gridSource,
+            pages: [{ page: gridPage, text: gridText }],
           },
           pv: {
-            document_source: "pv-commission-poc.txt",
-            pages: [{ page: 7, text: pvText }],
+            document_source: pvSource,
+            pages: [{ page: pvPage, text: pvText }],
           },
         }),
       });
@@ -106,15 +114,60 @@ export default function AiRankingPocPage() {
       </p>
 
       <section style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginTop: 24 }}>
-        <label>
-          <strong>Texte extrait — grille de notation</strong>
-          <textarea value={gridText} onChange={(event) => setGridText(event.target.value)} rows={11} style={{ width: "100%", marginTop: 8, padding: 10, boxSizing: "border-box" }} />
-        </label>
-        <label>
-          <strong>Texte extrait — PV</strong>
-          <textarea value={pvText} onChange={(event) => setPvText(event.target.value)} rows={11} style={{ width: "100%", marginTop: 8, padding: 10, boxSizing: "border-box" }} />
-        </label>
+        <div>
+          <strong>Source réelle — grille de notation</strong>
+          <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 8, marginTop: 8 }}>
+            <input
+              aria-label="Nom du document grille"
+              value={gridSource}
+              onChange={(event) => setGridSource(event.target.value)}
+              placeholder="grille-notation.pdf"
+              style={{ padding: 9, boxSizing: "border-box", width: "100%" }}
+            />
+            <input
+              aria-label="Page grille"
+              type="number"
+              min={1}
+              value={gridPage}
+              onChange={(event) => setGridPage(Math.max(1, Number(event.target.value) || 1))}
+              style={{ padding: 9, boxSizing: "border-box", width: "100%" }}
+            />
+          </div>
+          <label style={{ display: "block", marginTop: 10 }}>
+            <strong>Texte extrait — grille de notation</strong>
+            <textarea value={gridText} onChange={(event) => setGridText(event.target.value)} rows={11} style={{ width: "100%", marginTop: 8, padding: 10, boxSizing: "border-box" }} />
+          </label>
+        </div>
+
+        <div>
+          <strong>Source réelle — PV</strong>
+          <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 8, marginTop: 8 }}>
+            <input
+              aria-label="Nom du document PV"
+              value={pvSource}
+              onChange={(event) => setPvSource(event.target.value)}
+              placeholder="pv-commission.pdf"
+              style={{ padding: 9, boxSizing: "border-box", width: "100%" }}
+            />
+            <input
+              aria-label="Page PV"
+              type="number"
+              min={1}
+              value={pvPage}
+              onChange={(event) => setPvPage(Math.max(1, Number(event.target.value) || 1))}
+              style={{ padding: 9, boxSizing: "border-box", width: "100%" }}
+            />
+          </div>
+          <label style={{ display: "block", marginTop: 10 }}>
+            <strong>Texte extrait — PV</strong>
+            <textarea value={pvText} onChange={(event) => setPvText(event.target.value)} rows={11} style={{ width: "100%", marginTop: 8, padding: 10, boxSizing: "border-box" }} />
+          </label>
+        </div>
       </section>
+
+      <p style={{ fontSize: 13, marginTop: 10 }}>
+        Pour un smoke test réel, renseigner le nom exact du document et la page réelle correspondant au texte collé. Ces valeurs sont conservées avec chaque fait extrait.
+      </p>
 
       <button onClick={runAnalysis} disabled={loading} style={{ marginTop: 16, padding: "10px 16px", fontWeight: 700, cursor: loading ? "wait" : "pointer" }}>
         {loading ? "Analyse locale en cours…" : "Lancer la tranche verticale IA"}
