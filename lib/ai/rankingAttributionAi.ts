@@ -15,7 +15,7 @@ import type {
 } from "./types";
 
 const MIN_FACT_CONFIDENCE_FOR_CONTROL = 0.7;
-const MAX_RECONCILIATIONS = 16;
+const MAX_RECONCILIATIONS = 4;
 
 export type AiRankingAttributionAnalysis = {
   status: "ok" | "insuffisant";
@@ -110,16 +110,33 @@ function buildRankingInputFromFacts(
   };
 }
 
+/**
+ * Le PoC ne rapproche pas arbitrairement tous les faits entre eux : il cible uniquement
+ * les relations utiles au scénario classement/attribution afin de limiter les appels IA.
+ */
 function candidatePairs(
-  leftFacts: ExtractedFact[],
-  rightFacts: ExtractedFact[],
+  gridFacts: ExtractedFact[],
+  pvFacts: ExtractedFact[],
 ): Array<[ExtractedFact, ExtractedFact]> {
   const pairs: Array<[ExtractedFact, ExtractedFact]> = [];
+  const pvAwardees = pvFacts.filter((fact) => fact.type_fait === "attributaire_declare");
 
-  for (const left of leftFacts) {
-    for (const right of rightFacts) {
-      if (left.type_fait !== right.type_fait) continue;
-      pairs.push([left, right]);
+  // 1. Cas le plus utile : premier du classement dans la grille versus attributaire du PV.
+  const gridWinners = gridFacts.filter(
+    (fact) => fact.type_fait === "classement" && fact.rang === 1,
+  );
+  for (const winner of gridWinners) {
+    for (const awardee of pvAwardees) {
+      pairs.push([winner, awardee]);
+      if (pairs.length >= MAX_RECONCILIATIONS) return pairs;
+    }
+  }
+
+  // 2. Si la grille mentionne elle-même un attributaire, comparer les deux mentions.
+  const gridAwardees = gridFacts.filter((fact) => fact.type_fait === "attributaire_declare");
+  for (const gridAwardee of gridAwardees) {
+    for (const pvAwardee of pvAwardees) {
+      pairs.push([gridAwardee, pvAwardee]);
       if (pairs.length >= MAX_RECONCILIATIONS) return pairs;
     }
   }
