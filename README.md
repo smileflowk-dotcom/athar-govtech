@@ -42,13 +42,32 @@ npm run dev
 
 Puis ouvrir `http://localhost:3000`.
 
+## Assistance Gemini optionnelle
+
+ATHAR conserve son extraction PDF locale et ses contrôles déterministes comme fonctionnement par défaut. Une couche Gemini facultative peut être activée uniquement pour proposer des passages candidats à examiner par un contrôleur humain.
+
+Elle ne décide jamais qu’un marché est conforme, irrégulier, illégal ou frauduleux et ne remplace aucune règle ATHAR.
+
+Configuration serveur :
+
+```env
+ATHAR_GEMINI_ENABLED=false
+ATHAR_GEMINI_MODEL=gemini-3.7-flash
+GEMINI_API_KEY=
+```
+
+L’API `POST /api/ai/gemini/assist` exige en plus `confirmExternalProcessing: true` dans chaque requête. Seul le texte explicitement fourni à cette route est transmis à Gemini ; l’import PDF `/api/pdf/extract` reste local et n’appelle aucune API externe.
+
+Ne jamais activer cette capacité pour des documents sensibles sans cadre institutionnel, contractuel et de sécurité explicitement autorisé.
+
 ## Principes
 
 - aucune accusation automatique ;
 - preuve visible avant toute conclusion ;
 - règles configurables et validées par la Cour ;
 - fonctionnement local / on-premise cible ;
-- aucune donnée sensible envoyée vers une API externe ;
+- aucune donnée sensible envoyée vers une API externe sans autorisation explicite ;
+- Gemini, lorsqu’il est activé, reste une assistance à la recherche de preuves et non un moteur de décision ;
 - minimum viable avant toute extension.
 
 ## État
