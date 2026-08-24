@@ -48,6 +48,7 @@ services:
       HOSTNAME: 0.0.0.0
       PORT: 3000
       ATHAR_DATA_DIR: ${ATHAR_DATA_DIR:-/data}
+      ATHAR_DOCLING_URL: ${ATHAR_DOCLING_URL:-}
     volumes:
       - athar_data:${ATHAR_DATA_DIR:-/data}
     # ATHAR reçoit/traite les documents et exécute les règles. Il est uniquement
@@ -73,6 +74,28 @@ services:
       retries: 12
       start_period: 10s
 
+  # Moteur documentaire local optionnel. Il n'est lancé que lorsque le profil
+  # `enhanced-docs` est demandé. ATHAR peut ainsi rester léger par défaut et
+  # basculer localement vers OCR + compréhension de structure pour les scans.
+  docling:
+    profiles: ["enhanced-docs"]
+    image: quay.io/docling-project/docling-serve:v1.29.0
+    environment:
+      DOCLING_SERVE_ENABLE_UI: "0"
+      DOCLING_SERVE_ENABLE_REMOTE_SERVICES: "false"
+    networks:
+      - athar_internal
+    volumes:
+      - docling_cache:/root/.cache
+    read_only: true
+    tmpfs:
+      - /tmp:size=1g,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
 networks:
   athar_internal:
     name: athar_govtech_internal
@@ -83,3 +106,5 @@ networks:
 volumes:
   athar_data:
     name: athar_govtech_data
+  docling_cache:
+    name: athar_docling_cache
