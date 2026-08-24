@@ -75,11 +75,10 @@ services:
       start_period: 10s
 
   # Moteur documentaire local optionnel. Il n'est lancé que lorsque le profil
-  # `enhanced-docs` est demandé. ATHAR peut ainsi rester léger par défaut et
-  # basculer localement vers OCR + compréhension de structure pour les scans.
+  # `enhanced-docs` est demandé. L'image officielle expose l'API sur le port 5001.
   docling:
     profiles: ["enhanced-docs"]
-    image: quay.io/docling-project/docling-serve:v1.29.0
+    image: quay.io/docling-project/docling-serve
     environment:
       DOCLING_SERVE_ENABLE_UI: "0"
       DOCLING_SERVE_ENABLE_REMOTE_SERVICES: "false"
