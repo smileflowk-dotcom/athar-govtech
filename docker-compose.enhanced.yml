@@ -1,0 +1,10 @@
+services:
+  athar:
+    environment:
+      ATHAR_DOCLING_URL: http://docling:5001
+    depends_on:
+      docling:
+        condition: service_started
+
+  docling:
+    profiles: []
