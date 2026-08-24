@@ -5,10 +5,11 @@ Ce packaging ne change pas les contrôles métier. Il rend le démonstrateur ATH
 ## Prérequis
 
 - Docker Engine / Docker Desktop avec Docker Compose v2 ;
-- 8 Go de RAM recommandés pour une démonstration confortable ;
-- connexion Internet nécessaire uniquement pour le premier build des images et le téléchargement des dépendances.
+- 8 Go de RAM recommandés pour le mode léger ;
+- davantage de RAM est recommandée pour le mode OCR/Docling selon la taille des dossiers ;
+- connexion Internet nécessaire uniquement pour le premier build des images et le téléchargement initial des modèles/dépendances.
 
-## Lancer le PoC
+## Lancer le PoC — mode léger
 
 Une commande :
 
@@ -22,22 +23,41 @@ Elle construit les images, démarre ATHAR puis affiche l'URL locale :
 http://127.0.0.1:3000
 ```
 
-Après le build initial, la machine peut être isolée d'Internet et relancer les images existantes avec :
+Ce mode utilise l'extraction PDF native `pdfjs-dist` et conserve les quatre contrôles déterministes.
+
+## Lancer le PoC — mode documentaire renforcé
+
+Une commande :
 
 ```bash
-docker compose up -d
+make enhanced
 ```
 
-Aucune API cloud n'est requise pour exécuter l'interface, l'extraction PDF texte, les quatre contrôles ou la persistance locale.
+Ce mode démarre aussi le service local Docling et configure automatiquement ATHAR avec :
+
+```text
+ATHAR_DOCLING_URL=http://docling:5001
+```
+
+Le flux devient : extraction native → contrôle qualité → fallback Docling/OCR si nécessaire → normalisation FR/AR/tableaux → contrôles ATHAR.
+
+Docling reste sur le réseau Docker interne et n'est pas exposé sur l'hôte. L'API utilisée par ATHAR est `/v1/convert/file`.
+
+Après le téléchargement initial des images et modèles nécessaires, l'instance peut fonctionner dans un environnement isolé selon la politique réseau retenue.
 
 ## Architecture du PoC
 
-Deux conteneurs sont utilisés, sans découper le métier en micro-services :
+Mode léger :
 
 - `athar` : application Next.js, API locales, extraction PDF, quatre contrôles et SQLite ;
-- `gateway` : relais HTTP minimal qui expose uniquement `127.0.0.1` et transmet le flux vers ATHAR. Il ne contient aucune règle, n'extrait aucun document et ne stocke pas les requêtes.
+- `gateway` : relais HTTP minimal qui expose uniquement `127.0.0.1`.
 
-Cette séparation est uniquement une frontière réseau : elle permet de conserver le conteneur qui traite les documents sur un réseau Docker totalement interne tout en laissant le navigateur local accéder au démonstrateur.
+Mode renforcé :
+
+- `docling` s'ajoute comme moteur documentaire local optionnel pour OCR, structure et tableaux ;
+- il communique uniquement avec `athar` sur `athar_govtech_internal`.
+
+Cette séparation est une frontière technique : elle permet de conserver les documents et traitements sur le réseau interne tout en laissant le navigateur local accéder au démonstrateur.
 
 ## Stockage local
 
@@ -47,33 +67,29 @@ Les dossiers, alertes et décisions de validation sont enregistrés dans SQLite 
 athar_govtech_data
 ```
 
-Un `docker compose down` conserve ce volume. `docker compose down -v` le supprime volontairement.
+Le cache documentaire Docling est conservé dans :
+
+```text
+athar_docling_cache
+```
+
+Un `docker compose down` conserve les volumes. Une suppression avec `-v` les supprime volontairement.
 
 ## Isolation réseau
 
-Le conteneur `athar`, qui reçoit les PDF après relais et exécute les règles, est attaché uniquement au réseau :
+Le conteneur `athar`, qui reçoit les PDF et exécute les règles, est attaché au réseau :
 
 ```text
 athar_govtech_internal
 ```
 
-Ce réseau est déclaré `internal: true` dans `docker-compose.yml`. ATHAR n'a donc pas de route Internet sortante.
+Ce réseau est déclaré `internal: true` dans `docker-compose.yml`.
 
-Le `gateway` est le seul composant exposé sur `127.0.0.1`. Il est un proxy fixe vers `athar:3000` et ne possède aucune logique de stockage ou d'analyse documentaire.
+En mode renforcé, `docling` est attaché au même réseau interne et n'expose aucun port vers l'extérieur.
 
-Vérifier la configuration Docker :
+Le `gateway` est le seul composant exposé sur `127.0.0.1`.
 
-```bash
-docker network inspect athar_govtech_internal
-```
-
-Vérifier activement qu'une sortie Internet échoue depuis le conteneur qui traite les documents :
-
-```bash
-docker compose exec -T athar node -e "fetch('https://example.com',{signal:AbortSignal.timeout(3000)}).then(()=>{console.error('ERREUR: sortie Internet disponible');process.exit(1)}).catch(()=>{console.log('OK: aucune sortie Internet');process.exit(0)})"
-```
-
-Le raccourci suivant teste le healthcheck local et cette absence de sortie Internet :
+Vérifier activement la configuration :
 
 ```bash
 make verify
@@ -81,23 +97,23 @@ make verify
 
 ## Configuration
 
-`.env.example` ne contient que :
+Variables principales :
 
 - `ATHAR_PORT` : port HTTP local exposé par le gateway ;
-- `ATHAR_DATA_DIR` : chemin du stockage persistant dans le conteneur ATHAR.
+- `ATHAR_DATA_DIR` : stockage persistant ;
+- `ATHAR_DOCLING_URL` : URL interne du moteur documentaire ; le mode `make enhanced` la configure automatiquement.
 
-Aucune clé API n'est requise.
+Gemini reste optionnel et désactivé par défaut ; aucune clé API n'est requise pour le mode local Docling.
 
 ## Limites assumées du PoC
 
-- SQLite convient au démonstrateur mono-instance ; une architecture de production pourra utiliser le stockage interne validé par la DSI ;
+- SQLite convient au démonstrateur mono-instance ;
 - HTTP local uniquement : HTTPS/TLS n'est pas configuré par défaut ;
 - pas encore de gestion avancée des comptes, rôles, SSO ou RBAC ;
-- pas d'OCR dans ce packaging : l'import PDF actuel cible les PDF avec texte extractible ;
+- l'OCR manuscrit arabe ancien reste un cas difficile et devra être benchmarké sur le dataset pilote CDC ;
 - pas de mécanisme de sauvegarde/restauration institutionnel configuré ;
-- le gateway est une frontière de démonstration, pas un reverse proxy de production durci ;
 - pas d'homologation sécurité : certificats, identité, rétention, supervision et règles réseau de production restent à cadrer avec la DSI CDC/CRC.
 
 ## Portée technique
 
-Le cœur ATHAR reste volontairement une seule application déployable : frontend Next.js, routes API locales, extraction PDF et moteur de règles sont empaquetés ensemble. Le deuxième conteneur ne sert qu'à l'entrée HTTP locale et à préserver l'absence de sortie réseau du moteur documentaire.
+Le cœur ATHAR reste volontairement une seule application métier. Docling est un service documentaire local optionnel ; il n'est pas une source de décision et ne remplace ni les règles ATHAR ni la validation humaine.
