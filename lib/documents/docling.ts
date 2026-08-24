@@ -44,14 +44,14 @@ function pagesFromDoclingJson(document: DoclingJson): ExtractedPage[] {
   }
 
   for (const table of document.tables ?? []) {
-    const text = (table.data?.table_cells ?? [])
+    const cells = (table.data?.table_cells ?? [])
       .map((cell) => cell.text?.trim())
-      .filter((value): value is string => Boolean(value))
-      .join(" | ");
-    if (!text) continue;
+      .filter((value): value is string => Boolean(value));
+    if (cells.length === 0) continue;
+
     const page = firstPageNo(table.prov);
     const current = chunks.get(page) ?? [];
-    current.push(text);
+    current.push(`[TABLE]\n| ${cells.join(" | ")} |`);
     chunks.set(page, current);
   }
 
@@ -69,9 +69,12 @@ export async function extractWithDocling(file: File): Promise<ExtractedPage[]> {
   form.append("from_formats", "pdf");
   form.append("to_formats", "json");
   form.append("do_ocr", "true");
-  form.append("force_ocr", "false");
+  form.append("force_ocr", process.env.ATHAR_DOCLING_FORCE_OCR === "true" ? "true" : "false");
   form.append("table_mode", "accurate");
   form.append("image_export_mode", "placeholder");
+
+  const ocrLang = process.env.ATHAR_DOCLING_OCR_LANG?.trim();
+  if (ocrLang) form.append("ocr_lang", ocrLang);
 
   const response = await fetch(`${baseUrl}/v1/convert/file`, {
     method: "POST",
