@@ -1,0 +1,207 @@
+/* Responsive layer validated against web-uplift's adapt-to-the-form-factor guidance.
+   The desktop caseworking workspace remains unchanged above 900px. */
+
+@media (max-width: 900px) {
+  body {
+    min-width: 0;
+  }
+
+  .app-shell {
+    display: block;
+    min-height: 100vh;
+  }
+
+  .topbar {
+    align-items: center;
+    display: grid;
+    gap: 10px 12px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    min-height: 0;
+    padding: 12px 14px;
+  }
+
+  .brand-block {
+    min-width: 0;
+  }
+
+  .dossier-context {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .dossier-context > span {
+    display: none !important;
+  }
+
+  .dossier-context > span:last-child {
+    border-left: 0;
+    display: block !important;
+    padding-left: 0;
+  }
+
+  .top-actions {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: auto;
+    overflow: visible;
+  }
+
+  .panel {
+    min-width: 0;
+    overflow: visible;
+  }
+
+  .case-panel,
+  .evidence-panel,
+  .decision-panel {
+    min-height: 0;
+  }
+
+  .panel-heading {
+    flex-basis: auto;
+    min-height: 60px;
+    padding: 10px 14px;
+  }
+
+  .alert-list,
+  .evidence-scroll,
+  .decision-content {
+    overflow: visible;
+  }
+
+  .alert-list,
+  .evidence-scroll,
+  .decision-content {
+    flex: none;
+  }
+
+  .comparison-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .comparison-arrow {
+    min-height: 18px;
+    transform: rotate(90deg);
+  }
+
+  .impact-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .impact-row > div {
+    border-bottom: 1px solid #edc9c4;
+    border-right: 0;
+  }
+
+  .source-tabs {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .document-viewer > header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .document-viewer article {
+    margin: 10px;
+    min-height: 0;
+    padding: clamp(16px, 5vw, 28px);
+    width: auto;
+  }
+
+  .decision-content {
+    padding-bottom: 18px;
+  }
+
+  .report-button {
+    margin-top: 4px;
+  }
+}
+
+@media (max-width: 520px) {
+  .topbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .brand-block {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .top-actions {
+    display: grid;
+    gap: 8px;
+    grid-column: 1;
+    grid-row: 2;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .top-actions .primary-button,
+  .top-actions .secondary-button {
+    font-size: 11px;
+    min-width: 0;
+    padding-inline: 8px;
+    width: 100%;
+  }
+
+  .dossier-context {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .panel-heading h2 {
+    font-size: 13px;
+  }
+
+  .evidence-scroll {
+    padding: 12px;
+  }
+
+  .control-title {
+    gap: 10px;
+    padding-inline: 13px;
+  }
+
+  .control-title h1 {
+    font-size: 16px;
+  }
+
+  .rule-line {
+    padding-inline: 13px;
+  }
+
+  .document-viewer mark {
+    font-size: 11px;
+    overflow-wrap: anywhere;
+  }
+
+  .modal-backdrop {
+    padding: 12px;
+  }
+
+  .report-body {
+    padding: 12px;
+  }
+
+  .report-finding {
+    padding: 13px;
+  }
+
+  .report-finding dl {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 3px;
+  }
+
+  .report-finding dd {
+    margin-bottom: 7px;
+  }
+}
