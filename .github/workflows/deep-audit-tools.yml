@@ -30,6 +30,26 @@ jobs:
           git -C "$RUNNER_TEMP/tardigrade" checkout -q 9f46c0663a9d5b28cfabe0f71e74a516b60d85f7
           echo "Pinned audit tools fetched outside application source tree"
 
+      - name: Apply Tardigrade mock compatibility shim
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path("/home/runner/work/_temp/tardigrade/packages/backend/src/agent/llm.ts")
+          text = path.read_text()
+          old = '''      type: "scroll",
+                direction: "down",
+                reasoning: "Mock: scroll down to see more content",'''.replace('                ', '      ')
+          new = '''      type: "scroll",
+                deltaX: 0,
+                deltaY: 600,
+                reasoning: "Mock: scroll down to see more content",'''.replace('                ', '      ')
+          if old not in text:
+              raise SystemExit("Pinned Tardigrade mock signature changed; refusing silent patch")
+          path.write_text(text.replace(old, new, 1))
+          print("Tardigrade mock scroll shim applied: deltaX=0, deltaY=600")
+          PY
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -100,6 +120,7 @@ jobs:
             echo "ATHAR audit tooling validation"
             echo "codebase-audit: 16db555ea2c0282eb965343f109c037aeabe4d54"
             echo "tardigrade: 9f46c0663a9d5b28cfabe0f71e74a516b60d85f7"
+            echo "Tardigrade mock compatibility shim: scroll deltaX=0 deltaY=600"
             echo "ATHAR server log follows"
             cat /tmp/athar.log 2>/dev/null || true
           } > audit-tooling-validation.txt
