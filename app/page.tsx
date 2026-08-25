@@ -28,7 +28,12 @@ import {
   type EvidenceState,
   type ProcurementAlert,
 } from "../lib/data/demoDossiers";
-import { buildImportedDossier, type ExtractedPdf } from "../lib/data/importedDossier";
+import {
+  buildImportedDossier,
+  mergeImportedDossiers,
+  type ExtractedPdf,
+} from "../lib/data/importedDossier";
+import { buildStructuredDossier } from "../lib/data/importedStructuredSource";
 
 const statusLabels: Record<AlertStatus, string> = {
   pending: "À examiner",
@@ -60,6 +65,14 @@ function fallbackEvidence(alert: ProcurementAlert): EvidenceItem[] {
   }];
 }
 
+function isStructuredEvidence(item?: EvidenceItem) {
+  return item?.location.toLowerCase().includes("enregistrement structuré") ?? false;
+}
+
+function alertUsesStructuredEvidence(alert: ProcurementAlert) {
+  return (alert.evidenceItems ?? fallbackEvidence(alert)).some(isStructuredEvidence);
+}
+
 function formatDecisionDate(value?: string) {
   if (!value) return "Aucune décision enregistrée";
   return new Intl.DateTimeFormat("fr-FR", {
@@ -77,8 +90,8 @@ export default function Home() {
   const [decisionMessage, setDecisionMessage] = useState("");
   const [query, setQuery] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
-  const [pdfImporting, setPdfImporting] = useState(false);
-  const [pdfError, setPdfError] = useState("");
+  const [sourceImporting, setSourceImporting] = useState(false);
+  const [sourceError, setSourceError] = useState("");
   const [persistenceReady, setPersistenceReady] = useState(false);
 
   const activeDossier = dossiers.find((dossier) => dossier.id === activeDossierId) ?? dossiers[0];
@@ -89,6 +102,7 @@ export default function Home() {
     [activeAlert],
   );
   const selectedEvidence = evidenceItems.find((item) => item.id === selectedEvidenceId) ?? evidenceItems[0];
+  const selectedEvidenceIsStructured = isStructuredEvidence(selectedEvidence);
   const displayedPage = activeAlert?.page ?? activeDossier.activePage;
   const selectedEvidencePage = Number(selectedEvidence?.location.match(/page\s+(\d+)/i)?.[1]) || displayedPage;
   const canDecide = decisionNote.trim().length >= 8;
@@ -163,26 +177,44 @@ export default function Home() {
     setDecisionMessage(`${statusLabels[status]} · décision enregistrée et traçable.`);
   }
 
-  async function handlePdfUpload(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
+  async function handleSourceUpload(event: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files ?? []);
     event.target.value = "";
-    if (!file) return;
-    setPdfError("");
-    setPdfImporting(true);
+    if (!files.length) return;
+
+    setSourceError("");
+    setSourceImporting(true);
+
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const response = await fetch("/api/pdf/extract", { method: "POST", body: formData });
-      const payload = (await response.json()) as ExtractedPdf & { error?: string };
-      if (!response.ok) throw new Error(payload.error ?? "Impossible de lire ce PDF.");
-      const importedDossier = buildImportedDossier(payload);
+      const importedSources: Dossier[] = [];
+
+      for (const file of files) {
+        if (file.type === "application/pdf" || /\.pdf$/i.test(file.name)) {
+          const formData = new FormData();
+          formData.append("file", file);
+          const response = await fetch("/api/pdf/extract", { method: "POST", body: formData });
+          const payload = (await response.json()) as ExtractedPdf & { error?: string };
+          if (!response.ok) throw new Error(payload.error ?? `Impossible de lire ${file.name}.`);
+          importedSources.push(buildImportedDossier(payload));
+          continue;
+        }
+
+        if (/\.(json|csv)$/i.test(file.name)) {
+          importedSources.push(buildStructuredDossier(file.name, await file.text()));
+          continue;
+        }
+
+        throw new Error(`Format non pris en charge : ${file.name}. Utilisez PDF, JSON ou CSV.`);
+      }
+
+      const importedDossier = mergeImportedDossiers(importedSources);
       setDossiers((current) => [importedDossier, ...current]);
       setActiveDossierId(importedDossier.id);
       setActiveAlertId(importedDossier.alerts[0]?.id ?? null);
     } catch (error) {
-      setPdfError(error instanceof Error ? error.message : "Impossible de lire ce PDF.");
+      setSourceError(error instanceof Error ? error.message : "ATHAR n’a pas pu traiter les sources sélectionnées.");
     } finally {
-      setPdfImporting(false);
+      setSourceImporting(false);
     }
   }
 
@@ -197,19 +229,26 @@ export default function Home() {
           <div><span className="eyebrow">DOSSIER ACTIF</span><strong>{activeDossier.title}</strong></div>
           <span>{activeDossier.buyer ?? "Acheteur non renseigné"}</span>
           <span>{activeDossier.procedure ?? "Procédure à identifier"}</span>
-          <span>{activeDossier.documentCount ?? 1} pièce{(activeDossier.documentCount ?? 1) > 1 ? "s" : ""}</span>
+          <span>{activeDossier.documentCount ?? 1} source{(activeDossier.documentCount ?? 1) > 1 ? "s" : ""}</span>
         </div>
         <div className="top-actions">
-          <label className="secondary-button upload-button" title="Traitement local, sans API documentaire externe">
-            {pdfImporting ? <Loader2 className="spin" size={16} /> : <Upload size={16} />}
-            {pdfImporting ? "Extraction…" : "Importer un PDF"}
-            <input type="file" accept="application/pdf,.pdf" onChange={handlePdfUpload} disabled={pdfImporting} hidden />
+          <label className="secondary-button upload-button" title="PDF texte, JSON ou CSV · plusieurs sources peuvent être regroupées dans un même dossier · traitement local">
+            {sourceImporting ? <Loader2 className="spin" size={16} /> : <Upload size={16} />}
+            {sourceImporting ? "Traitement…" : "Ajouter des sources"}
+            <input
+              type="file"
+              accept="application/pdf,.pdf,application/json,.json,text/csv,.csv"
+              multiple
+              onChange={handleSourceUpload}
+              disabled={sourceImporting}
+              hidden
+            />
           </label>
           <button className="primary-button" onClick={() => setPreviewOpen(true)}><FileCheck2 size={16} /> Fiche de constat</button>
         </div>
       </header>
 
-      {pdfError && <div className="error-banner" role="alert">{pdfError}</div>}
+      {sourceError && <div className="error-banner" role="alert">{sourceError}</div>}
 
       <section className="workspace" aria-label="Poste de contrôle ATHAR">
         <aside className="panel case-panel">
@@ -235,7 +274,7 @@ export default function Home() {
                 <span className="alert-index">{String(index + 1).padStart(2, "0")}</span>
                 <span className="alert-copy">
                   <strong>{alert.type}</strong>
-                  <small>{alert.controlId ?? "CTRL-V0"} · page {alert.page}</small>
+                  <small>{alert.controlId ?? "CTRL-V0"} · {alertUsesStructuredEvidence(alert) ? "donnée structurée" : `page ${alert.page}`}</small>
                   <span className={`evidence-state state-${alert.evidenceState ?? "retrieved"}`}>{evidenceStateLabels[alert.evidenceState ?? "retrieved"]}</span>
                 </span>
                 <span className={`status-dot status-${alert.status}`} title={statusLabels[alert.status]} />
@@ -272,7 +311,7 @@ export default function Home() {
                 </section>
               )}
               <section className="sources-section">
-                <div className="section-title"><div><FileSearch2 size={17} /><strong>Pièces rapprochées</strong></div><span>{evidenceItems.length} source{evidenceItems.length > 1 ? "s" : ""}</span></div>
+                <div className="section-title"><div><FileSearch2 size={17} /><strong>Sources rapprochées</strong></div><span>{evidenceItems.length} source{evidenceItems.length > 1 ? "s" : ""}</span></div>
                 <div className="source-tabs" role="tablist" aria-label="Sources de preuve">
                   {evidenceItems.map((item) => (
                     <button key={item.id} role="tab" aria-selected={item.id === selectedEvidence?.id} className={item.id === selectedEvidence?.id ? "active" : ""} onClick={() => setSelectedEvidenceId(item.id)}>
@@ -285,8 +324,14 @@ export default function Home() {
                 <section className="document-viewer" aria-label="Passage source exact">
                   <header><div><span className="eyebrow">PASSAGE SOURCE EXACT</span><strong>{selectedEvidence.source}</strong></div><span>{selectedEvidence.location}</span></header>
                   <article>
-                    <span className="document-kicker">{activeDossier.realDocument ? "Document importé et extrait localement" : "Document de démonstration — données fictives"}</span>
-                    <p>Page {selectedEvidencePage} / {activeDossier.totalPages}</p>
+                    <span className="document-kicker">
+                      {selectedEvidenceIsStructured
+                        ? "Donnée structurée importée localement"
+                        : activeDossier.realDocument
+                          ? "Document importé et extrait localement"
+                          : "Document de démonstration — données fictives"}
+                    </span>
+                    {!selectedEvidenceIsStructured && <p>Page {selectedEvidencePage} / {activeDossier.totalPages}</p>}
                     <mark>{selectedEvidence.excerpt}</mark>
                     <div className="source-anchor"><CheckCircle2 size={15} /> Passage rattaché au contrôle {activeAlert.controlId ?? "CTRL-V0"}</div>
                   </article>
