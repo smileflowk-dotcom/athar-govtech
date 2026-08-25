@@ -155,7 +155,6 @@ export function buildStructuredDossier(filename: string, text: string): Dossier 
       excerpt: evidenceExcerpt,
       role: "observé",
       state: "retrieved",
-      sourceKind: "structured",
     }],
   }] : [];
 
