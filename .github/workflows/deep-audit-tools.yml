@@ -1,6 +1,15 @@
 name: ATHAR deep audit tools
 
 on:
+  pull_request:
+    paths:
+      - ".gitmodules"
+      - "tools/**"
+      - ".codex/skills/codebase-audit/**"
+      - ".codex/skills/tardigrade-audit/**"
+      - "docs/AUDIT_TOOLING.md"
+      - ".github/workflows/deep-audit-tools.yml"
+      - "AGENTS.md"
   workflow_dispatch:
 
 jobs:
