@@ -1,0 +1,10 @@
+{
+  "codebase-audit": {
+    "repository": "https://github.com/kevinpatrickrobbins/codebase-audit.git",
+    "commit": "16db555ea2c0282eb965343f109c037aeabe4d54"
+  },
+  "tardigrade": {
+    "repository": "https://github.com/noemit/tardigrade.git",
+    "commit": "9f46c0663a9d5b28cfabe0f71e74a516b60d85f7"
+  }
+}
