@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./responsive.css";
+import "./audit-improvements.css";
 
 export const metadata: Metadata = {
   title: "ATHAR — Chaque alerte mène à sa preuve",
