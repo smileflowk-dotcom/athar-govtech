@@ -33,5 +33,19 @@ The manual GitHub workflow `ATHAR deep audit tools` verifies:
 - Tardigrade runs a synthetic-user browser exploration against local ATHAR in `MOCK_LLM=true` mode;
 - the current task evaluator produces a mock finding.
 
+## Audit round 2 — product improvements
+
+The second product pass uses the three-tool stack as one evidence loop rather than treating installation as completion.
+
+Verified gaps addressed in `ux/audit-round-2`:
+- typography below comfortable caseworking size in several high-frequency labels;
+- human decision state represented primarily by a tiny coloured dot and hover title;
+- horizontal-layout gap on small laptops/tablets between the former 900px mobile breakpoint and the minimum three-panel width;
+- reduced-motion preference not respected by the import spinner.
+
+The implementation keeps ATHAR's canonical flow unchanged: `dossier → preuve multisource → décision humaine → fiche de constat`.
+
+A separate persistence truthfulness gap remains environment-specific: the on-premise target uses local SQLite, while the public Vercel demonstration uses temporary serverless storage. Public-demo copy must never imply durable on-premise persistence.
+
 ## Security rule
 No external audit tool may receive sensitive procurement documents or real case data. Any external-LLM Tardigrade run uses demo/fictitious data only.

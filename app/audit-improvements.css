@@ -1,0 +1,261 @@
+/* Audit round 2 — targeted improvements derived from the installed audit toolchain.
+   Keep the evidence-first three-panel workbench; improve readability, state clarity,
+   small-laptop behavior, and non-color status communication. */
+
+@media (min-width: 1181px) {
+  body {
+    min-width: 0;
+  }
+
+  .app-shell {
+    grid-template-rows: 76px minmax(0, 1fr);
+  }
+
+  .workspace {
+    background: var(--canvas);
+    gap: 8px;
+    grid-template-columns: 330px minmax(520px, 1fr) 350px;
+    padding: 8px;
+  }
+
+  .panel {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+  }
+}
+
+.brand-block span,
+.eyebrow {
+  font-size: 10px;
+}
+
+.dossier-context > span {
+  font-size: 11px;
+}
+
+.panel-heading h2 {
+  font-size: 15px;
+}
+
+.dossier-row {
+  min-height: 44px;
+}
+
+.dossier-row strong {
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.dossier-row small,
+.queue-heading small,
+.alert-copy small {
+  font-size: 10px;
+}
+
+.alert-row {
+  align-items: start;
+  grid-template-columns: 4px 24px minmax(0, 1fr) auto;
+  padding: 11px 10px;
+}
+
+.severity-marker {
+  min-height: 52px;
+}
+
+.alert-index {
+  font-size: 11px;
+}
+
+.alert-copy strong {
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.evidence-state,
+.evidence-summary,
+.source-state {
+  font-size: 10px;
+  padding: 4px 6px;
+}
+
+/* Human decision state must not depend on a tiny colour dot or hover title. */
+.status-dot {
+  align-self: start;
+  border: 0;
+  border-radius: 999px;
+  box-shadow: none;
+  display: inline-flex;
+  font-size: 9px;
+  font-weight: 750;
+  height: auto;
+  line-height: 1.15;
+  padding: 4px 7px;
+  white-space: nowrap;
+  width: auto;
+}
+
+.status-dot::after {
+  display: inline;
+}
+
+.status-pending {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+.status-pending::after {
+  content: "À examiner";
+}
+
+.status-confirmed {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.status-confirmed::after {
+  content: "Confirmé";
+}
+
+.status-dismissed {
+  background: #f0f3f3;
+  color: var(--muted);
+}
+
+.status-dismissed::after {
+  content: "Écartée";
+}
+
+.status-requested {
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+
+.status-requested::after {
+  content: "Pièce demandée";
+}
+
+.local-note,
+.empty-queue span,
+.empty-evidence span,
+.empty-decision span {
+  font-size: 10px;
+}
+
+.control-title span {
+  font-size: 10px;
+}
+
+.control-title h1 {
+  font-size: 18px;
+}
+
+.level {
+  font-size: 10px !important;
+}
+
+.rule-line span,
+.comparison-grid p {
+  font-size: 12px;
+}
+
+.rule-line strong,
+.fact-label {
+  font-size: 10px;
+}
+
+.impact-row span {
+  font-size: 9px;
+}
+
+.impact-row p {
+  font-size: 11px;
+}
+
+.impact-row p strong {
+  font-size: 10px;
+}
+
+.section-title > span {
+  font-size: 10px;
+}
+
+.source-tabs strong {
+  font-size: 11px;
+}
+
+.source-tabs small {
+  font-size: 10px;
+}
+
+.document-viewer header strong,
+.document-kicker {
+  font-size: 11px;
+}
+
+.document-viewer header > span,
+.document-viewer article > p,
+.source-anchor {
+  font-size: 10px;
+}
+
+.document-viewer mark {
+  font-size: 13px;
+  line-height: 1.75;
+}
+
+.decision-content {
+  gap: 14px;
+}
+
+.current-status > span {
+  font-size: 9px;
+}
+
+.current-status strong {
+  font-size: 14px;
+}
+
+.current-status small,
+.decision-brief div,
+.trace-card ul {
+  font-size: 10px;
+}
+
+.decision-brief p {
+  font-size: 12px;
+}
+
+.decision-note > span,
+.trace-card strong {
+  font-size: 11px;
+}
+
+.decision-note > span strong,
+.decision-note small,
+.decision-message {
+  font-size: 9px;
+}
+
+.modal-header span,
+.report-finding > span {
+  font-size: 10px;
+}
+
+.report-warning,
+.report-finding dl,
+.empty-report {
+  font-size: 11px;
+}
+
+@media (max-width: 520px) {
+  .status-dot {
+    font-size: 8px;
+    padding-inline: 6px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin {
+    animation: none;
+  }
+}
