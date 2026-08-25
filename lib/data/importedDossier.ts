@@ -10,7 +10,11 @@ export type ExtractedPdf = {
   filename: string;
   totalPages: number;
   pages: ExtractedPdfPage[];
-  processing: "local-server";
+  processing:
+    | "local-server"
+    | "local-native-pdf"
+    | "local-native-pdf-degraded"
+    | "local-enhanced-document";
   externalApiUsed: false;
 };
 
@@ -46,6 +50,7 @@ function candidatePassages(text: string): string[] {
 }
 
 export function buildImportedDossier(pdf: ExtractedPdf): Dossier {
+  const importId = `pdf-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   let alert: ProcurementAlert | undefined;
   let selectedPage = pdf.pages.find((page) => page.text.trim()) ?? {
     page: 1,
@@ -61,7 +66,7 @@ export function buildImportedDossier(pdf: ExtractedPdf): Dossier {
       selectedPage = page;
       selectedExcerpt = passage;
       alert = {
-        id: `pdf-${Date.now()}-restrictive-clause`,
+        id: `${importId}-restrictive-clause`,
         type: "Clause potentiellement restrictive",
         level: result.level,
         rule: "Principe d’accès équitable à la commande publique",
@@ -80,7 +85,7 @@ export function buildImportedDossier(pdf: ExtractedPdf): Dossier {
         evidenceState: "retrieved",
         evidenceItems: [
           {
-            id: `pdf-${Date.now()}-source`,
+            id: `${importId}-source`,
             source: pdf.filename,
             location: `Page ${page.page} · passage extrait localement`,
             excerpt: result.evidence,
@@ -96,7 +101,7 @@ export function buildImportedDossier(pdf: ExtractedPdf): Dossier {
   const cleanTitle = pdf.filename.replace(/\.pdf$/i, "");
 
   return {
-    id: `pdf-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    id: importId,
     title: cleanTitle,
     score: alert ? 85 : 12,
     excerpt: selectedExcerpt,
@@ -109,5 +114,32 @@ export function buildImportedDossier(pdf: ExtractedPdf): Dossier {
     procedure: "À identifier",
     deadline: "À qualifier",
     documentCount: 1,
+  };
+}
+
+export function mergeImportedDossiers(importedSources: Dossier[]): Dossier {
+  if (importedSources.length === 0) throw new Error("Aucune source exploitable à regrouper.");
+  if (importedSources.length === 1) return importedSources[0];
+
+  const preferredContext = importedSources.find((source) =>
+    source.buyer !== "Non renseigné" || source.procedure !== "À identifier",
+  ) ?? importedSources[0];
+  const alerts = importedSources.flatMap((source) => source.alerts);
+  const primaryEvidence = importedSources.find((source) => source.alerts.length > 0) ?? preferredContext;
+
+  return {
+    id: `sources-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    title: preferredContext.title,
+    score: Math.max(...importedSources.map((source) => source.score)),
+    excerpt: primaryEvidence.excerpt,
+    alerts,
+    sourceLabel: importedSources.map((source) => source.sourceLabel).join(" · "),
+    totalPages: importedSources.reduce((sum, source) => sum + Math.max(1, source.totalPages), 0),
+    activePage: primaryEvidence.activePage,
+    realDocument: true,
+    buyer: preferredContext.buyer,
+    procedure: preferredContext.procedure,
+    deadline: preferredContext.deadline,
+    documentCount: importedSources.reduce((sum, source) => sum + (source.documentCount ?? 1), 0),
   };
 }
