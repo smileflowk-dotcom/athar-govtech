@@ -1,43 +1,43 @@
-name: ATHAR check
+name: ATHAR web-uplift audit
 
 on:
+  push:
+    branches:
+      - audit/web-uplift
   pull_request:
-    paths:
-      - "app/**"
-      - "lib/**"
-      - "package.json"
-      - "package-lock.json"
-      - "tsconfig.json"
-      - "next-env.d.ts"
-      - "next.config.ts"
-      - ".github/workflows/ui-check.yml"
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  build:
+  audit:
+    if: ${{ !contains(github.event.head_commit.message || '', 'chore: install web-uplift') }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 22
-      - name: Install
-        run: npm install
-      - name: Test
-        run: npm test
-      - name: Build
-        run: npm run build
+          node-version: 20
+          cache: npm
 
-      - name: Install web-uplift for Codex
+      - name: Install ATHAR dependencies
+        run: npm ci
+
+      - name: Install web-uplift skill for Codex
         run: npx -y web-uplift@latest install --agent codex
+
+      - name: Build ATHAR
+        run: npm run build
 
       - name: Start ATHAR locally
         run: |
@@ -52,7 +52,7 @@ jobs:
           cat /tmp/athar.log
           exit 1
 
-      - name: Collect web-uplift evidence
+      - name: Collect web-uplift browser evidence
         shell: bash
         run: |
           set +e
@@ -75,24 +75,27 @@ jobs:
 
           echo "--- ATHAR server log ---" > web-uplift-evidence/athar-server.log
           cat /tmp/athar.log >> web-uplift-evidence/athar-server.log
-          cp .web-uplift/manifest.json web-uplift-evidence/manifest.json || true
+
+          echo "--- Installed web-uplift manifest ---"
+          cat .web-uplift/manifest.json || true
+          echo "--- Evidence files ---"
           find web-uplift-evidence -maxdepth 2 -type f -printf '%p %s bytes\n' | sort
 
-      - name: Persist web-uplift installation on audit branch
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+      - name: Commit web-uplift installation to audit branch
+        if: github.event_name == 'push'
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add .web-uplift .codex AGENTS.md
           if git diff --cached --quiet; then
-            echo "web-uplift already installed"
+            echo "No installation changes to commit"
           else
             git commit -m "chore: install web-uplift"
-            git push origin HEAD:${{ github.head_ref }}
+            git push origin HEAD:audit/web-uplift
           fi
 
-      - name: Upload web-uplift evidence
+      - name: Upload evidence
         uses: actions/upload-artifact@v4
         with:
           name: athar-web-uplift-evidence
