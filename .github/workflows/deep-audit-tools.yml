@@ -3,8 +3,8 @@ name: ATHAR deep audit tools
 on:
   pull_request:
     paths:
-      - ".gitmodules"
-      - "tools/**"
+      - "tools/audit-tools.json"
+      - "scripts/audit/**"
       - ".codex/skills/codebase-audit/**"
       - ".codex/skills/tardigrade-audit/**"
       - "docs/AUDIT_TOOLING.md"
@@ -16,26 +16,27 @@ jobs:
   validate-audit-tooling:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      ATHAR_AUDIT_TOOLS_DIR: ${{ runner.temp }}/athar-audit-tools
     steps:
       - name: Checkout ATHAR
         uses: actions/checkout@v4
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
       - name: Fetch pinned audit tools outside ATHAR runtime
-        shell: bash
-        run: |
-          set -euo pipefail
-          git clone -q https://github.com/kevinpatrickrobbins/codebase-audit.git "$RUNNER_TEMP/codebase-audit"
-          git -C "$RUNNER_TEMP/codebase-audit" checkout -q 16db555ea2c0282eb965343f109c037aeabe4d54
-          git clone -q https://github.com/noemit/tardigrade.git "$RUNNER_TEMP/tardigrade"
-          git -C "$RUNNER_TEMP/tardigrade" checkout -q 9f46c0663a9d5b28cfabe0f71e74a516b60d85f7
-          echo "Pinned audit tools fetched outside application source tree"
+        run: node scripts/audit/fetch-tools.mjs
 
       - name: Apply pinned Tardigrade compatibility shims
         shell: bash
         run: |
           python3 - <<'PY'
+          import os
           from pathlib import Path
-          root = Path("/home/runner/work/_temp/tardigrade")
+          root = Path(os.environ["ATHAR_AUDIT_TOOLS_DIR"]) / "tardigrade"
           llm = root / "packages/backend/src/agent/llm.ts"
           text = llm.read_text()
           marker = '      direction: "down",'
@@ -55,19 +56,15 @@ jobs:
           print("Tardigrade shims applied: mock scroll + current task evaluator")
           PY
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
       - name: Verify codebase-audit integration
         shell: bash
         run: |
           set -euo pipefail
-          test -f "$RUNNER_TEMP/codebase-audit/workflows/kpr/gap-analysis.md"
-          test -f "$RUNNER_TEMP/codebase-audit/workflows/kpr/persistence-gap-analysis.md"
-          test -f "$RUNNER_TEMP/codebase-audit/workflows/kpr/qa-test-part-1-planning.md"
-          test -f "$RUNNER_TEMP/codebase-audit/workflows/kpr/qa-test-part-2-execution.md"
+          ROOT="$ATHAR_AUDIT_TOOLS_DIR/codebase-audit"
+          test -f "$ROOT/workflows/kpr/gap-analysis.md"
+          test -f "$ROOT/workflows/kpr/persistence-gap-analysis.md"
+          test -f "$ROOT/workflows/kpr/qa-test-part-1-planning.md"
+          test -f "$ROOT/workflows/kpr/qa-test-part-2-execution.md"
           echo "codebase-audit pinned integration: OK"
 
       - name: Install and verify ATHAR
@@ -93,19 +90,19 @@ jobs:
       - name: Install Tardigrade
         shell: bash
         run: |
-          cd "$RUNNER_TEMP/tardigrade"
+          cd "$ATHAR_AUDIT_TOOLS_DIR/tardigrade"
           npm install
 
       - name: Typecheck Tardigrade
         shell: bash
         run: |
-          cd "$RUNNER_TEMP/tardigrade"
+          cd "$ATHAR_AUDIT_TOOLS_DIR/tardigrade"
           npm run typecheck
 
       - name: Install Chromium for Tardigrade
         shell: bash
         run: |
-          cd "$RUNNER_TEMP/tardigrade"
+          cd "$ATHAR_AUDIT_TOOLS_DIR/tardigrade"
           npx playwright install --with-deps chromium
 
       - name: Run Tardigrade synthetic-user smoke audit
@@ -114,7 +111,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          cd "$RUNNER_TEMP/tardigrade"
+          cd "$ATHAR_AUDIT_TOOLS_DIR/tardigrade"
           npm run example --workspace=packages/backend -- http://127.0.0.1:3000 default 2>&1 | tee "$GITHUB_WORKSPACE/tardigrade-athar-smoke.log"
           grep -q "Agent loop finished: success" "$GITHUB_WORKSPACE/tardigrade-athar-smoke.log"
           grep -q "Evaluation complete:" "$GITHUB_WORKSPACE/tardigrade-athar-smoke.log"

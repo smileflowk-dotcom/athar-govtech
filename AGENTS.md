@@ -51,8 +51,8 @@ When asked to web-audit, UX-audit, uplift, modernise, or quality-audit a site, r
 
 ## codebase-audit
 
-For a deep repository, architecture, persistence, QA, or gap audit, read `.codex/skills/codebase-audit/SKILL.md` and use the pinned upstream methodology under `tools/codebase-audit/`. ATHAR scope and security rules remain authoritative over generic audit recommendations.
+For a deep repository, architecture, persistence, QA, or gap audit, read `.codex/skills/codebase-audit/SKILL.md`. Fetch the pinned upstream tool outside the application source tree with `node scripts/audit/fetch-tools.mjs codebase-audit`. ATHAR scope and security rules remain authoritative over generic audit recommendations.
 
 ## Tardigrade
 
-For synthetic-user UX/functional browser audits, read `.codex/skills/tardigrade-audit/SKILL.md`. Use demo/fictitious data for any external-LLM run; never expose sensitive procurement documents or case data.
+For synthetic-user UX/functional browser audits, read `.codex/skills/tardigrade-audit/SKILL.md`. Fetch it outside the application source tree with `node scripts/audit/fetch-tools.mjs tardigrade`. Use demo/fictitious data for any external-LLM run; never expose sensitive procurement documents or case data.
