@@ -331,7 +331,9 @@ export default function Home() {
                           ? "Document importé et extrait localement"
                           : "Document de démonstration — données fictives"}
                     </span>
-                    {!selectedEvidenceIsStructured && <p>Page {selectedEvidencePage} / {activeDossier.totalPages}</p>}
+                    {!selectedEvidenceIsStructured && (
+                      <p>{(activeDossier.documentCount ?? 1) > 1 ? `Page ${selectedEvidencePage}` : `Page ${selectedEvidencePage} / ${activeDossier.totalPages}`}</p>
+                    )}
                     <mark>{selectedEvidence.excerpt}</mark>
                     <div className="source-anchor"><CheckCircle2 size={15} /> Passage rattaché au contrôle {activeAlert.controlId ?? "CTRL-V0"}</div>
                   </article>
