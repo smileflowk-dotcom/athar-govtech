@@ -1,7 +1,8 @@
 /* Responsive layer validated against web-uplift's adapt-to-the-form-factor guidance.
-   The desktop caseworking workspace remains unchanged above 900px. */
+   The desktop caseworking workspace remains three-panel above 1180px; smaller
+   laptops and tablets use the same evidence-first vertical flow as mobile. */
 
-@media (max-width: 900px) {
+@media (max-width: 1180px) {
   body {
     min-width: 0;
   }
