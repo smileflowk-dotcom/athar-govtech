@@ -48,3 +48,11 @@ Avant chaque ajout, préciser :
 ## web-uplift (modern-web audit + fix)
 
 When asked to web-audit, UX-audit, uplift, modernise, or quality-audit a site, read `.web-uplift/skill/SKILL.md` and follow it exactly. Gather evidence with `node .web-uplift/evidence/cli.mjs <primitive> <url> [options]` (raw CDP). `--fix --source <dir>` runs the model-driven hill-climb.
+
+## codebase-audit
+
+For a deep repository, architecture, persistence, QA, or gap audit, read `.codex/skills/codebase-audit/SKILL.md` and use the pinned upstream methodology under `tools/codebase-audit/`. ATHAR scope and security rules remain authoritative over generic audit recommendations.
+
+## Tardigrade
+
+For synthetic-user UX/functional browser audits, read `.codex/skills/tardigrade-audit/SKILL.md`. Use demo/fictitious data for any external-LLM run; never expose sensitive procurement documents or case data.

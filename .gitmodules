@@ -1,0 +1,6 @@
+[submodule "tools/codebase-audit"]
+	path = tools/codebase-audit
+	url = https://github.com/kevinpatrickrobbins/codebase-audit.git
+[submodule "tools/tardigrade"]
+	path = tools/tardigrade
+	url = https://github.com/noemit/tardigrade.git

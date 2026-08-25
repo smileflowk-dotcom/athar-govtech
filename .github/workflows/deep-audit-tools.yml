@@ -1,0 +1,93 @@
+name: ATHAR deep audit tools
+
+on:
+  workflow_dispatch:
+
+jobs:
+  validate-audit-tooling:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout ATHAR and audit tools
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Verify codebase-audit integration
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f tools/codebase-audit/workflows/kpr/gap-analysis.md
+          test -f tools/codebase-audit/workflows/kpr/persistence-gap-analysis.md
+          test -f tools/codebase-audit/workflows/kpr/qa-test-part-1-planning.md
+          test -f tools/codebase-audit/workflows/kpr/qa-test-part-2-execution.md
+          echo "codebase-audit pinned integration: OK"
+
+      - name: Install and verify ATHAR
+        run: |
+          npm install
+          npm test
+          npm run build
+
+      - name: Start ATHAR
+        shell: bash
+        run: |
+          nohup npm start > /tmp/athar.log 2>&1 &
+          for i in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:3000 > /dev/null; then
+              echo "ATHAR ready"
+              exit 0
+            fi
+            sleep 2
+          done
+          cat /tmp/athar.log
+          exit 1
+
+      - name: Install Tardigrade
+        working-directory: tools/tardigrade
+        run: npm install
+
+      - name: Typecheck Tardigrade
+        working-directory: tools/tardigrade
+        run: npm run typecheck
+
+      - name: Install Chromium for Tardigrade
+        working-directory: tools/tardigrade
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Tardigrade synthetic-user smoke audit
+        working-directory: tools/tardigrade
+        env:
+          MOCK_LLM: "true"
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run example --workspace=packages/backend -- http://127.0.0.1:3000 default 2>&1 | tee ../../tardigrade-athar-smoke.log
+
+      - name: Save validation summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "ATHAR audit tooling validation"
+            echo "codebase-audit: 16db555ea2c0282eb965343f109c037aeabe4d54"
+            echo "tardigrade: 9f46c0663a9d5b28cfabe0f71e74a516b60d85f7"
+            echo "ATHAR server log follows"
+            cat /tmp/athar.log 2>/dev/null || true
+          } > audit-tooling-validation.txt
+
+      - name: Upload audit validation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: athar-audit-tooling-validation
+          path: |
+            audit-tooling-validation.txt
+            tardigrade-athar-smoke.log
+          if-no-files-found: warn
+          retention-days: 7
