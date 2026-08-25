@@ -35,35 +35,23 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-
           root = Path("/home/runner/work/_temp/tardigrade")
-
           llm = root / "packages/backend/src/agent/llm.ts"
           text = llm.read_text()
-          old = '''      type: "scroll",
-      direction: "down",
-      reasoning: "Mock: scroll down to see more content",'''
-          new = '''      type: "scroll",
-      deltaX: 0,
-      deltaY: 600,
-      reasoning: "Mock: scroll down to see more content",'''
-          if old not in text:
+          marker = '      direction: "down",'
+          replacement = '      deltaX: 0,\n      deltaY: 600,'
+          if marker not in text:
               raise SystemExit("Pinned Tardigrade mock signature changed; refusing silent patch")
-          llm.write_text(text.replace(old, new, 1))
-
+          llm.write_text(text.replace(marker, replacement, 1))
           example = root / "packages/backend/scripts/run-example.ts"
           text = example.read_text()
           old_import = 'import { scoreRun } from "../src/evaluator/scorer.js";'
-          new_import = 'import { evaluateRun } from "../src/evaluator/taskEvaluator.js";'
-          old_call = '''    await scoreRun(runId, rubricSetId);
-    console.log("Scoring complete.");'''
-          new_call = '''    const evaluation = await evaluateRun(runId);
-    console.log(`Evaluation complete: ${evaluation.summary}`);'''
+          old_call = '    await scoreRun(runId, rubricSetId);\n    console.log("Scoring complete.");'
           if old_import not in text or old_call not in text:
               raise SystemExit("Pinned Tardigrade example CLI changed; refusing silent patch")
-          text = text.replace(old_import, new_import, 1).replace(old_call, new_call, 1)
+          text = text.replace(old_import, 'import { evaluateRun } from "../src/evaluator/taskEvaluator.js";', 1)
+          text = text.replace(old_call, '    const evaluation = await evaluateRun(runId);\n    console.log(`Evaluation complete: ${evaluation.summary}`);', 1)
           example.write_text(text)
-
           print("Tardigrade shims applied: mock scroll + current task evaluator")
           PY
 
@@ -140,7 +128,7 @@ jobs:
             echo "ATHAR audit tooling validation"
             echo "codebase-audit: 16db555ea2c0282eb965343f109c037aeabe4d54"
             echo "tardigrade: 9f46c0663a9d5b28cfabe0f71e74a516b60d85f7"
-            echo "Tardigrade compatibility shims: mock scroll schema + example CLI uses current evaluateRun path"
+            echo "Tardigrade compatibility: mock scroll schema + example CLI aligned to current evaluateRun path"
             echo "ATHAR server log follows"
             cat /tmp/athar.log 2>/dev/null || true
           } > audit-tooling-validation.txt
