@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      ATHAR_AUDIT_TOOLS_DIR: ${{ runner.temp }}/athar-audit-tools
+      ATHAR_AUDIT_TOOLS_DIR: /tmp/athar-audit-tools
     steps:
       - name: Checkout ATHAR
         uses: actions/checkout@v4
