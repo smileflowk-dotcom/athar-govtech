@@ -17,10 +17,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - name: Checkout ATHAR and audit tools
+      - name: Checkout ATHAR
         uses: actions/checkout@v4
-        with:
-          submodules: true
+
+      - name: Fetch pinned audit tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf tools/codebase-audit tools/tardigrade
+          git clone -q https://github.com/kevinpatrickrobbins/codebase-audit.git tools/codebase-audit
+          git -C tools/codebase-audit checkout -q 16db555ea2c0282eb965343f109c037aeabe4d54
+          git clone -q https://github.com/noemit/tardigrade.git tools/tardigrade
+          git -C tools/tardigrade checkout -q 9f46c0663a9d5b28cfabe0f71e74a516b60d85f7
+          echo "Pinned audit tools fetched"
 
       - name: Setup Node
         uses: actions/setup-node@v4
