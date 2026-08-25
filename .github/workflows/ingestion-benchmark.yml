@@ -1,0 +1,53 @@
+name: Ingestion benchmark
+
+on:
+  push:
+    branches:
+      - feat/athar-v3-condensed-workflow
+    paths:
+      - scripts/ingestion_benchmark.py
+      - .github/workflows/ingestion-benchmark.yml
+  workflow_dispatch:
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: System dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y poppler-utils tesseract-ocr tesseract-ocr-fra libmagic1 libreoffice
+
+      - name: Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install 'unstructured[pdf,docx,xlsx]' docling reportlab pillow python-docx openpyxl
+
+      - name: Run benchmark
+        run: python scripts/ingestion_benchmark.py
+
+      - name: Show results
+        if: always()
+        run: |
+          echo '--- CSV ---'
+          cat tmp/ingestion-results/results.csv || true
+          echo '--- JSON ---'
+          cat tmp/ingestion-results/results.json || true
+
+      - name: Upload benchmark artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ingestion-benchmark-results
+          path: tmp/ingestion-results/
+          if-no-files-found: warn
