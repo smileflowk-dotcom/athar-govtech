@@ -3,8 +3,12 @@ name: ATHAR deep audit tools
 on:
   pull_request:
     paths:
+      - "app/**"
+      - "lib/**"
       - "tools/audit-tools.json"
       - "scripts/audit/**"
+      - ".web-uplift/**"
+      - ".codex/skills/web-audit/**"
       - ".codex/skills/codebase-audit/**"
       - ".codex/skills/tardigrade-audit/**"
       - "docs/AUDIT_TOOLING.md"
@@ -15,7 +19,7 @@ on:
 jobs:
   validate-audit-tooling:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
     env:
       ATHAR_AUDIT_TOOLS_DIR: /tmp/athar-audit-tools
     steps:
@@ -87,6 +91,35 @@ jobs:
           cat /tmp/athar.log
           exit 1
 
+      - name: Install web-uplift evidence dependency
+        run: npm install --no-save chrome-remote-interface
+
+      - name: Run web-uplift browser evidence sweep
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p web-uplift-evidence
+          URL="http://127.0.0.1:3000"
+          node .web-uplift/evidence/cli.mjs layout "$URL" --viewport 390x844 --out web-uplift-evidence/layout-mobile.json --quiet
+          node .web-uplift/evidence/cli.mjs layout "$URL" --viewport 1024x768 --out web-uplift-evidence/layout-laptop.json --quiet
+          node .web-uplift/evidence/cli.mjs layout "$URL" --viewport 1440x1000 --out web-uplift-evidence/layout-desktop.json --quiet
+          node .web-uplift/evidence/cli.mjs dom "$URL" --viewport 1440x1000 --selector '.alert-copy strong,.document-viewer mark,.decision-brief p,.status-dot' --out web-uplift-evidence/dom-desktop.json --quiet
+          node .web-uplift/evidence/cli.mjs trace "$URL" --viewport 1440x1000 --out web-uplift-evidence/trace.json --quiet
+          node .web-uplift/evidence/cli.mjs discoverability "$URL" --out web-uplift-evidence/discoverability.json --quiet
+
+      - name: Assert web-uplift responsive evidence
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          for (const name of ['mobile', 'laptop', 'desktop']) {
+            const data = JSON.parse(fs.readFileSync(`web-uplift-evidence/layout-${name}.json`, 'utf8'));
+            const overflow = data?.observed?.horizontalOverflowPx;
+            if (overflow !== 0) throw new Error(`${name}: horizontal overflow ${overflow}px`);
+            console.log(`${name}: overflow 0px, CLS ${data?.observed?.cls ?? 'n/a'}`);
+          }
+          NODE
+
       - name: Install Tardigrade
         shell: bash
         run: |
@@ -123,6 +156,7 @@ jobs:
         run: |
           {
             echo "ATHAR audit tooling validation"
+            echo "web-uplift: installed evidence primitives + responsive/browser evidence sweep"
             echo "codebase-audit: 16db555ea2c0282eb965343f109c037aeabe4d54"
             echo "tardigrade: 9f46c0663a9d5b28cfabe0f71e74a516b60d85f7"
             echo "Tardigrade compatibility: mock scroll schema + example CLI aligned to current evaluateRun path"
@@ -138,5 +172,6 @@ jobs:
           path: |
             audit-tooling-validation.txt
             tardigrade-athar-smoke.log
+            web-uplift-evidence/**
           if-no-files-found: warn
           retention-days: 7
