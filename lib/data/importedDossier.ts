@@ -75,6 +75,19 @@ export function buildImportedDossier(pdf: ExtractedPdf): Dossier {
         status: "pending",
         indicators: result.indicators,
         generatedByControl: true,
+        controlId: "CTRL-ACC-01",
+        controlVersion: "1.0",
+        evidenceState: "retrieved",
+        evidenceItems: [
+          {
+            id: `pdf-${Date.now()}-source`,
+            source: pdf.filename,
+            location: `Page ${page.page} · passage extrait localement`,
+            excerpt: result.evidence,
+            role: "observé",
+            state: "retrieved",
+          },
+        ],
       };
       break outer;
     }
@@ -92,5 +105,9 @@ export function buildImportedDossier(pdf: ExtractedPdf): Dossier {
     totalPages: pdf.totalPages,
     activePage: selectedPage.page,
     realDocument: true,
+    buyer: "Non renseigné",
+    procedure: "À identifier",
+    deadline: "À qualifier",
+    documentCount: 1,
   };
 }

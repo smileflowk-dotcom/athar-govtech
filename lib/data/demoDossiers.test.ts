@@ -29,11 +29,24 @@ describe("buildCompleteJourneyDossier", () => {
 
     dossier.alerts.forEach((alert) => {
       expect(alert.generatedByControl).toBe(true);
+      expect(alert.controlId).toMatch(/^CTRL-/);
+      expect(alert.controlVersion).toBe("1.0");
       expect(alert.rule.length).toBeGreaterThan(0);
       expect(alert.expected.length).toBeGreaterThan(0);
       expect(alert.observed.length).toBeGreaterThan(0);
       expect(alert.evidence.length).toBeGreaterThan(0);
+      expect(alert.evidenceState).toMatch(/retrieved|contradictory|insufficient/);
+      expect(alert.evidenceItems?.length).toBeGreaterThan(0);
+      alert.evidenceItems?.forEach((evidence) => {
+        expect(evidence.source.length).toBeGreaterThan(0);
+        expect(evidence.location.length).toBeGreaterThan(0);
+        expect(evidence.excerpt.length).toBeGreaterThan(0);
+      });
       expect(alert.action.length).toBeGreaterThan(0);
     });
+
+    const rankingAlert = dossier.alerts.find((alert) => alert.controlId === "CTRL-NOT-01");
+    expect(rankingAlert?.evidenceState).toBe("contradictory");
+    expect(rankingAlert?.evidenceItems).toHaveLength(2);
   });
 });
