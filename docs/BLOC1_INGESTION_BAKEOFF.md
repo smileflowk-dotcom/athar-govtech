@@ -1,157 +1,82 @@
-# ATHAR — Bloc 1 Ingestion documentaire
+# ATHAR — Bloc 1 · Méthode d’ingestion documentaire
 
-## Objectif
-Valider une chaîne d’ingestion à faible code capable de traiter en masse les documents attendus par la CDC/CRC : PDF natifs et scannés, Word/Office, images, tableurs et données structurées, avec routage automatique, contrôle qualité, preuve/provenance et déploiement compatible environnement institutionnel.
+## Finalité
+ATHAR doit pouvoir recevoir un dossier de commande publique composé de pièces hétérogènes et les rendre exploitables pour le contrôle, sans demander au contrôleur de choisir un moteur technique ou une procédure de traitement.
 
-## Principe
-Un seul geste utilisateur : **Ajouter les pièces**.
+L’objectif fonctionnel est simple : **ajouter les pièces, qualifier leur état, conserver leur provenance et signaler ce qui nécessite une vérification humaine.**
 
-Flux cible :
+## Périmètre couvert
+La chaîne documentaire est conçue pour prendre en charge, selon les besoins du contexte institutionnel :
+- documents PDF natifs ou numérisés ;
+- documents bureautiques ;
+- images et pièces scannées ;
+- tableaux et données structurées ;
+- documents multilingues, notamment français et arabe ;
+- lots multi-pièces constituant un dossier complet.
 
-`Téléverser en masse → reconnaître → router → extraire/OCR → vérifier → classer → prêt / à vérifier`
+Le choix précis des composants techniques reste interchangeable afin de pouvoir s’adapter aux contraintes de sécurité, de souveraineté, de volume, de qualité documentaire et d’environnement de déploiement de la CDC/CRC.
 
-Le contrôleur ne choisit ni moteur OCR, ni paramètres techniques.
+## Parcours cible
+`Ajouter les pièces → reconnaître → extraire → qualifier → conserver la provenance → Prêt / À vérifier / Non traité`
 
-## Candidats
+Le contrôleur n’a pas à sélectionner un moteur OCR, un parseur, un modèle ou des paramètres techniques.
 
-### Unstructured — candidat no-code/minimum-code prioritaire
-- UI no-code pour configurer et lancer des workflows.
-- API et MCP disponibles si ATHAR doit automatiser ensuite.
-- Batch processing, orchestration ETL, Smart Document Routing, retries et error transparency.
-- 64+ formats annoncés sur l’offre actuelle.
-- Offre gratuite actuelle : 15 000 pages/mois, sans carte ; au-delà, 0,03 USD/page en pay-as-you-go.
-- Dedicated/VPC/bare metal réservés à l’offre Business sur devis.
-- Ne jamais envoyer de données CDC sensibles vers le SaaS pendant le benchmark.
+## Principes de méthode
 
-### Reducto — référence qualité premium
-- Parse, Extract, Split, classification et citations.
-- OCR agentique orienté documents difficiles.
-- Batch/async et forte traçabilité visuelle.
-- On-prem/VPC/air-gap sur offre Enterprise.
-- Référence qualité à utiliser sur les scans difficiles, tableaux et formulaires.
+### 1. Qualification documentaire
+ATHAR identifie la nature de la pièce et son niveau d’exploitabilité avant de la transmettre aux contrôles métier.
 
-### LandingAI ADE — référence qualité visuelle
-- Parse, Extract, Split/Classification, visual grounding et confidence scoring.
-- Traitement asynchrone et routage automatique.
-- VPC/on-prem/air-gap sur offre Enterprise.
-- Référence qualité pour scans, formulaires et tableaux.
+### 2. Extraction structurée
+Le contenu utile est transformé dans un format commun exploitable par les fonctions de contrôle, quelle que soit la nature initiale du document.
 
-### Docling — baseline souveraine locale
-- Open source et exécutable localement.
-- PDF, Office, images, CSV, emails et autres formats.
-- OCR, tables, provenance, API REST et batch.
-- Déjà intégré dans ATHAR pour le fallback OCR des PDF dégradés.
-- Filet souverain / baseline locale gratuite.
+### 3. Provenance conservée
+Lorsqu’un fait ou un élément est extrait, ATHAR conserve les informations nécessaires pour permettre le retour au document source et à son emplacement pertinent.
 
-## Corpus de test commun
-Chaque candidat reçoit exactement les mêmes cas :
-1. PDF natif FR.
-2. PDF scan propre FR.
-3. PDF scan dégradé.
-4. Document arabe.
-5. Document mixte FR/AR.
-6. DOCX.
-7. XLSX avec tableau.
-8. JPG/PNG de pièce scannée.
-9. PDF avec tableaux complexes.
-10. Lot multi-fichiers représentant un dossier complet.
+### 4. Gestion explicite de l’incertitude
+Une extraction incertaine n’est pas assimilée à une donnée fiable. Les pièces nécessitant une revue sont signalées au contrôleur.
 
-Aucune donnée institutionnelle sensible ne doit être envoyée dans un service SaaS pendant le benchmark. Utiliser uniquement des documents publics, synthétiques ou explicitement autorisés.
+### 5. Traitement multi-pièces
+Le système raisonne au niveau du dossier et non du fichier isolé. Plusieurs pièces peuvent contribuer à établir ou à vérifier un même fait.
 
-## Mesures obligatoires
-Pour chaque document et chaque moteur :
-- succès / échec ;
-- texte exploitable ;
-- structure et tableaux ;
-- page / bounding box / provenance ;
-- qualité FR ;
-- qualité arabe ;
-- qualité FR/AR ;
-- temps de traitement ;
-- capacité batch ;
-- intervention humaine requise ;
-- coût ;
-- possibilité on-prem / air-gap ;
-- effort d’intégration ATHAR.
+### 6. Déploiement institutionnel
+La chaîne est conçue pour pouvoir fonctionner dans un environnement compatible avec les exigences de confidentialité, de traçabilité des accès et de souveraineté définies avec la CDC/CRC.
 
-Les résultats sont saisis dans `docs/BLOC1_TEST_RESULTS.csv`.
+## Validation opérationnelle
+La validation détaillée sera réalisée, en cas de sélection, sur un corpus représentatif fourni ou approuvé par la CDC/CRC.
 
-## Séquence d’exécution
+Le protocole couvrira notamment :
+- documents numériques et scans ;
+- documents de qualité variable ;
+- contenus français, arabes et mixtes ;
+- tableaux et pièces bureautiques ;
+- dossiers multi-pièces ;
+- volumétrie et traitement en lot ;
+- restitution de la provenance ;
+- gestion des cas nécessitant une intervention humaine.
 
-### Phase A — Unstructured sans code
-1. Créer/utiliser un compte d’essai Unstructured.
-2. Utiliser l’interface web no-code, pas d’intégration ATHAR.
-3. Importer uniquement le corpus public/synthétique.
-4. Tester d’abord les cas 1 à 9 individuellement.
-5. Tester ensuite le lot multi-fichiers complet.
-6. Exporter/observer la sortie structurée, les erreurs et la provenance disponible.
-7. Reporter les résultats dans la grille.
+Les critères détaillés, seuils, scénarios de routage, mécanismes de sélection des moteurs, règles internes de qualité et logique d’orchestration sont conservés dans la documentation technique privée du projet.
 
-**But :** déterminer jusqu’où Unstructured supprime réellement le code d’ingestion ATHAR avant toute intégration.
+## Critères de réussite visibles
+Le Bloc 1 est considéré fonctionnel lorsque :
+- l’utilisateur peut ajouter plusieurs pièces dans un même dossier ;
+- les formats attendus sont reconnus ou explicitement signalés comme non traités ;
+- chaque pièce dispose d’un état clair : **Prêt / À vérifier / Non traité** ;
+- la provenance vers la source est conservée ;
+- les pièces difficiles ne produisent pas silencieusement une donnée réputée fiable ;
+- les résultats sont exploitables par les contrôles ATHAR ;
+- le scénario de déploiement institutionnel est documenté.
 
-### Phase B — Docling local
-Sur le PC ATHAR :
+## Limite de publication
+La documentation publique décrit **les capacités, les garanties et la méthode de validation**.
 
-```powershell
-cd "C:\Users\lenovo\OneDrive\Documents\Parcelle\athar-govtech"
-git pull
-docker compose --profile enhanced-docs up -d --build
-docker compose ps
-```
+Elle ne publie pas :
+- les seuils internes ;
+- les règles de routage ;
+- les heuristiques ;
+- les mécanismes de scoring ;
+- les prompts ;
+- la priorité entre moteurs ;
+- la logique détaillée de rapprochement ;
+- les mécanismes internes de l’Evidence Engine.
 
-Puis vérifier ATHAR :
-
-```powershell
-Invoke-RestMethod http://127.0.0.1:3000/api/health
-```
-
-Faire passer le même corpus avec Docling local. Pour les PDF dégradés, ATHAR possède déjà le chemin :
-
-`pdfjs-dist → contrôle qualité → Docling/OCR si qualité dégradée`
-
-**But :** établir la baseline souveraine gratuite, sans envoi externe.
-
-### Phase C — Reducto et LandingAI
-Ne tester que :
-- scan dégradé ;
-- arabe / FR-AR ;
-- tableau complexe ;
-- lot multi-fichiers.
-
-**But :** vérifier si le gain de qualité premium est suffisamment important pour justifier une solution Enterprise institutionnelle.
-
-## Règle de décision
-Le moteur retenu doit minimiser le code spécifique ATHAR sans sacrifier :
-1. confidentialité et déploiement institutionnel ;
-2. qualité sur les documents CDC réels ;
-3. provenance permettant de revenir à la preuve ;
-4. capacité de traitement massif ;
-5. gestion explicite des erreurs et documents à vérifier.
-
-### Score de décision
-- Qualité OCR / structure : 30 %
-- Provenance / preuve : 20 %
-- Batch et robustesse : 15 %
-- Souveraineté / on-prem : 15 %
-- Effort d’intégration : 10 %
-- Coût : 10 %
-
-## Architecture cible envisagée
-
-### Voie A — minimum de code
-`ATHAR UI → Unstructured workflow → documents normalisés → moteur de contrôle ATHAR`
-
-### Voie B — souveraineté maximale
-`ATHAR UI → orchestrateur léger → Docling Serve/queue → documents normalisés → moteur de contrôle ATHAR`
-
-Reducto et LandingAI servent de benchmarks premium et restent des options Enterprise si leurs gains de qualité justifient le coût et que la CDC accepte leur modèle de déploiement.
-
-## Critère de fermeture du Bloc 1
-Le Bloc 1 n’est considéré terminé que lorsque :
-- le corpus commun passe les tests ;
-- l’upload multi-fichiers est utilisable ;
-- chaque pièce reçoit un état **Prêt / À vérifier / Non traité** ;
-- la provenance est conservée ;
-- les scans et l’arabe sont testés ;
-- le scénario de déploiement institutionnel est documenté ;
-- l’interface et le copywriting sont validés sur PC.
+Principe : **documenter la méthode sans publier la recette.**
