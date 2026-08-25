@@ -10,6 +10,7 @@ on:
       - "tsconfig.json"
       - "next-env.d.ts"
       - "next.config.ts"
+      - "next.config.mjs"
       - ".github/workflows/ui-check.yml"
   workflow_dispatch:
 
@@ -29,3 +30,11 @@ jobs:
         run: npm test
       - name: Build
         run: npm run build
+      - name: Verify PDF.js worker trace
+        shell: bash
+        run: |
+          set -euo pipefail
+          TRACE=.next/server/app/api/pdf/extract/route.js.nft.json
+          test -f "$TRACE"
+          grep -q 'pdf.worker.mjs' "$TRACE"
+          echo "pdfjs worker traced for /api/pdf/extract"
