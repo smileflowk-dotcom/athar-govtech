@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import "./mvp02.css";
 
 export const metadata: Metadata = {
-  title: "ATHAR — Public Procurement Control",
-  description: "PoC explicable de contrôle des marchés publics",
+  title: "ATHAR — Chaque alerte mène à sa preuve",
+  description: "Poste de contrôle explicable des marchés publics : dossier, preuve multisource et décision humaine.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

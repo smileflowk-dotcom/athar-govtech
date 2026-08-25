@@ -13,23 +13,22 @@ Permettre au contrôleur de comprendre une alerte, retrouver sa preuve et décid
 - statut du dossier ;
 - bouton `Générer la fiche de constat`.
 
-### Panneau gauche — Dossiers
+### Panneau gauche — Dossier et file de contrôle
 
 - recherche ;
-- filtres : tous, à valider, validés ;
-- titre du marché ;
-- nombre d’alertes ;
-- priorité simple.
+- sélection du dossier ;
+- liste complète des éléments à examiner ;
+- niveau de vigilance, état de preuve et statut humain visibles.
 
-### Panneau central — Document
+### Panneau central — Evidence Engine
 
-- visualiseur PDF ;
-- miniatures de pages ;
-- navigation ;
-- passage source surligné ;
-- clic sur une alerte = ouverture de la page et du passage associés.
+- règle versionnée ;
+- attendu, observé, écart et impact à examiner ;
+- pièces rapprochées ;
+- passage exact surligné et relié au contrôle ;
+- trois états sûrs : preuve retrouvée, contradiction, preuve insuffisante.
 
-### Panneau droit — Alerte
+### Panneau droit — Décision humaine
 
 Champs :
 
@@ -39,7 +38,8 @@ Champs :
 - attendu ;
 - observé ;
 - preuve ;
-- action recommandée.
+- justification obligatoire ;
+- traçabilité de la décision.
 
 Actions :
 
@@ -47,16 +47,9 @@ Actions :
 - écarter ;
 - demander une pièce.
 
-### Zone basse — Sortie
-
-- alertes confirmées ;
-- alertes en cours ;
-- alertes écartées ;
-- prévisualisation de la fiche de constat.
-
 ## Parcours unique
 
-`Charger → analyser → voir la preuve → décider → générer`
+`Dossier → élément à examiner → preuve multisource → décision → fiche de constat`
 
 ## Critères d’acceptation du squelette UI
 

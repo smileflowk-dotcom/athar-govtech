@@ -25,13 +25,16 @@ Sortie : alertes sourcées, décision humaine et fiche de constat provisoire.
 
 ## Démonstrateur d’interface
 
-La branche `feat/mvp-01-ui` contient une interface Next.js entièrement fictive :
+Le poste de contrôle V2 condense le parcours dans un écran unique :
 
-- liste et filtrage des dossiers ;
-- document avec passage source surligné ;
-- fiche d’alerte explicable ;
-- confirmation, rejet ou demande de pièce ;
-- prévisualisation d’une fiche de constat.
+- dossier et file des éléments à examiner ;
+- règle versionnée, attendu, observé et écart ;
+- preuves multisources avec passage exact et localisation ;
+- trois états sûrs : preuve retrouvée, contradiction, preuve insuffisante ;
+- décision humaine motivée : confirmer, écarter ou demander une pièce ;
+- fiche de constat construite uniquement à partir des alertes confirmées.
+
+**Voie directe :** `dossier → élément à examiner → preuve exacte → décision humaine`.
 
 ### Lancer localement
 

@@ -5,6 +5,17 @@ import { detectRestrictiveClause } from "../controls/restrictiveClause";
 
 export type AlertStatus = "pending" | "confirmed" | "dismissed" | "requested";
 
+export type EvidenceState = "retrieved" | "contradictory" | "insufficient";
+
+export type EvidenceItem = {
+  id: string;
+  source: string;
+  location: string;
+  excerpt: string;
+  role: "attendu" | "observé" | "contexte";
+  state: EvidenceState;
+};
+
 export type ProcurementAlert = {
   id: string;
   type: string;
@@ -19,6 +30,14 @@ export type ProcurementAlert = {
   status: AlertStatus;
   indicators: string[];
   generatedByControl: boolean;
+  controlId?: string;
+  controlVersion?: string;
+  gap?: string;
+  impact?: string;
+  evidenceState?: EvidenceState;
+  evidenceItems?: EvidenceItem[];
+  decisionNote?: string;
+  decisionAt?: string;
 };
 
 export type Dossier = {
@@ -31,6 +50,10 @@ export type Dossier = {
   totalPages: number;
   activePage: number;
   realDocument: boolean;
+  buyer?: string;
+  procedure?: string;
+  deadline?: string;
+  documentCount?: number;
 };
 
 const restrictiveExcerpt =
@@ -51,6 +74,10 @@ function buildDossier(id: string, title: string, excerpt: string, page: number):
     totalPages: 34,
     activePage: page,
     realDocument: false,
+    buyer: "Acheteur public — données fictives",
+    procedure: "Appel d’offres ouvert",
+    deadline: "À qualifier",
+    documentCount: 1,
     alerts: result.triggered
       ? [
           {
@@ -68,6 +95,19 @@ function buildDossier(id: string, title: string, excerpt: string, page: number):
             status: "pending",
             indicators: result.indicators,
             generatedByControl: true,
+            controlId: "CTRL-ACC-01",
+            controlVersion: "1.0",
+            evidenceState: "retrieved",
+            evidenceItems: [
+              {
+                id: `${id}-cps-${page}`,
+                source: "CPS fictif",
+                location: `Page ${page} · clause technique`,
+                excerpt: result.evidence,
+                role: "observé",
+                state: "retrieved",
+              },
+            ],
           },
         ]
       : [],
@@ -102,6 +142,21 @@ export function buildCompleteJourneyDossier(): Dossier {
       status: "pending",
       indicators: publicationResult.indicators,
       generatedByControl: true,
+      controlId: "CTRL-DEL-01",
+      controlVersion: "1.0",
+      gap: publicationResult.gap,
+      impact: "Le délai laissé aux opérateurs peut réduire leur capacité à préparer une offre.",
+      evidenceState: "retrieved",
+      evidenceItems: [
+        {
+          id: `${id}-avis-calendrier`,
+          source: "Avis d’appel d’offres fictif",
+          location: "Page 1 · calendrier de consultation",
+          excerpt: publicationExcerpt,
+          role: "observé",
+          state: "retrieved",
+        },
+      ],
     });
   }
 
@@ -125,6 +180,20 @@ export function buildCompleteJourneyDossier(): Dossier {
       status: "pending",
       indicators: restrictiveResult.indicators,
       generatedByControl: true,
+      controlId: "CTRL-ACC-01",
+      controlVersion: "1.0",
+      impact: "La formulation peut limiter l’accès à la commande en l’absence d’équivalence.",
+      evidenceState: "retrieved",
+      evidenceItems: [
+        {
+          id: `${id}-cps-clause`,
+          source: "CPS fictif",
+          location: "Page 6 · spécifications techniques",
+          excerpt: restrictiveResult.evidence,
+          role: "observé",
+          state: "retrieved",
+        },
+      ],
     });
   }
 
@@ -153,6 +222,20 @@ export function buildCompleteJourneyDossier(): Dossier {
       status: "pending",
       indicators: result.indicators,
       generatedByControl: true,
+      controlId: "CTRL-PRO-01",
+      controlVersion: "1.0",
+      impact: "Le dossier ne permet pas encore d’établir la complétude des déclarations requises.",
+      evidenceState: "insufficient",
+      evidenceItems: [
+        {
+          id: `${id}-commission-${index + 1}`,
+          source: "Dossier fictif de commission",
+          location: "Page 14 · liste des membres",
+          excerpt: `${result.memberName} — déclaration de probité : non retrouvée`,
+          role: "observé",
+          state: "insufficient",
+        },
+      ],
     });
   });
 
@@ -189,6 +272,29 @@ export function buildCompleteJourneyDossier(): Dossier {
       status: "pending",
       indicators: rankingResult.indicators,
       generatedByControl: true,
+      controlId: "CTRL-NOT-01",
+      controlVersion: "1.0",
+      gap: rankingResult.gap,
+      impact: "L’attributaire déclaré n’est pas le soumissionnaire le mieux classé dans la grille rapprochée.",
+      evidenceState: "contradictory",
+      evidenceItems: [
+        {
+          id: `${id}-grille`,
+          source: "Grille fictive de notation",
+          location: "Page 17 · classement final",
+          excerpt: "Atlas Services — 92 points · Rif Solutions — 84 points · Sahara Tech — 79 points",
+          role: "attendu",
+          state: "retrieved",
+        },
+        {
+          id: `${id}-pv`,
+          source: "PV fictif de commission",
+          location: "Page 18 · décision d’attribution",
+          excerpt: "Attributaire déclaré — Rif Solutions",
+          role: "observé",
+          state: "contradictory",
+        },
+      ],
     });
   }
 
@@ -209,6 +315,10 @@ export function buildCompleteJourneyDossier(): Dossier {
     totalPages: 18,
     activePage: alerts[0]?.page ?? 1,
     realDocument: false,
+    buyer: "Direction régionale — données fictives",
+    procedure: "Appel d’offres ouvert",
+    deadline: "Décision requise",
+    documentCount: 5,
     alerts,
   };
 }
@@ -233,6 +343,10 @@ function buildPublicationDelayDossier(): Dossier {
     totalPages: 1,
     activePage: 1,
     realDocument: false,
+    buyer: "Acheteur public — données fictives",
+    procedure: "Appel d’offres ouvert",
+    deadline: "À qualifier",
+    documentCount: 1,
     alerts: result.triggered
       ? [
           {
@@ -249,6 +363,20 @@ function buildPublicationDelayDossier(): Dossier {
             status: "pending",
             indicators: result.indicators,
             generatedByControl: true,
+            controlId: "CTRL-DEL-01",
+            controlVersion: "1.0",
+            gap: result.gap,
+            evidenceState: "retrieved",
+            evidenceItems: [
+              {
+                id: "publication-delay-avis",
+                source: "Avis fictif",
+                location: "Page 1 · calendrier",
+                excerpt,
+                role: "observé",
+                state: "retrieved",
+              },
+            ],
           },
         ]
       : [],
@@ -279,6 +407,10 @@ function buildProbityDossier(): Dossier {
     totalPages: 1,
     activePage: 1,
     realDocument: false,
+    buyer: "Acheteur public — données fictives",
+    procedure: "Commission d’appel d’offres",
+    deadline: "Pièces à compléter",
+    documentCount: 1,
     alerts: results.map((result, index) => ({
       id: `probity-declaration-${index + 1}`,
       type: "Signal simple relatif aux obligations de probité",
@@ -293,6 +425,19 @@ function buildProbityDossier(): Dossier {
       status: "pending",
       indicators: result.indicators,
       generatedByControl: true,
+      controlId: "CTRL-PRO-01",
+      controlVersion: "1.0",
+      evidenceState: "insufficient",
+      evidenceItems: [
+        {
+          id: `probity-source-${index + 1}`,
+          source: "Liste fictive des membres",
+          location: "Page 1 · déclarations",
+          excerpt: `${result.memberName} — déclaration de probité : non retrouvée`,
+          role: "observé",
+          state: "insufficient",
+        },
+      ],
     })),
   };
 }
@@ -326,6 +471,10 @@ function buildRankingAttributionDossier(): Dossier {
     totalPages: 7,
     activePage: 7,
     realDocument: false,
+    buyer: "Acheteur public — données fictives",
+    procedure: "Évaluation des offres",
+    deadline: "Décision requise",
+    documentCount: 2,
     alerts: result.triggered
       ? [
           {
@@ -342,6 +491,28 @@ function buildRankingAttributionDossier(): Dossier {
             status: "pending",
             indicators: result.indicators,
             generatedByControl: true,
+            controlId: "CTRL-NOT-01",
+            controlVersion: "1.0",
+            gap: result.gap,
+            evidenceState: "contradictory",
+            evidenceItems: [
+              {
+                id: "ranking-source-grid",
+                source: "Grille fictive de notation",
+                location: "Page 4 · classement final",
+                excerpt: "Atlas Services — 92 points · Rif Solutions — 84 points · Sahara Tech — 79 points",
+                role: "attendu",
+                state: "retrieved",
+              },
+              {
+                id: "ranking-source-pv",
+                source: "PV fictif de commission",
+                location: "Page 7 · attribution",
+                excerpt: "Attributaire déclaré — Rif Solutions",
+                role: "observé",
+                state: "contradictory",
+              },
+            ],
           },
         ]
       : [],
