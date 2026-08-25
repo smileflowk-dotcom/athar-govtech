@@ -39,6 +39,15 @@ jobs:
       - name: Install web-uplift for Codex
         run: npx -y web-uplift@latest install --agent codex
 
+      - name: Consult Modern Web Guidance for responsive layout
+        shell: bash
+        run: |
+          mkdir -p web-uplift-evidence/guidance
+          npx -y modern-web-guidance@0.0.172 search "responsive layout adapt viewport mobile" | tee web-uplift-evidence/guidance/search-responsive.txt
+          npx -y modern-web-guidance@0.0.172 retrieve fluid-scaling | tee web-uplift-evidence/guidance/fluid-scaling.txt
+          npx -y modern-web-guidance@0.0.172 retrieve calculate-with-intrinsic-sizes | tee web-uplift-evidence/guidance/calculate-with-intrinsic-sizes.txt
+          npx -y modern-web-guidance@0.0.172 retrieve css-layout | tee web-uplift-evidence/guidance/css-layout.txt
+
       - name: Start ATHAR locally
         run: |
           nohup npm start > /tmp/athar.log 2>&1 &
@@ -55,7 +64,7 @@ jobs:
       - name: Collect web-uplift evidence
         shell: bash
         run: |
-          set +e
+          set -o pipefail
           mkdir -p web-uplift-evidence
           CLI="node .web-uplift/evidence/cli.mjs"
           URL="http://127.0.0.1:3000"
@@ -66,11 +75,7 @@ jobs:
           $CLI layout "$URL" --viewport 390x844 --out web-uplift-evidence/layout-mobile.json 2>&1 | tee web-uplift-evidence/layout-mobile.log
           $CLI dom "$URL" --source . --out web-uplift-evidence/dom.json 2>&1 | tee web-uplift-evidence/dom.log
           $CLI discoverability "$URL" --out web-uplift-evidence/discoverability 2>&1 | tee web-uplift-evidence/discoverability.log
-          $CLI headers "$URL" --out web-uplift-evidence/headers.json 2>&1 | tee web-uplift-evidence/headers.log
-          $CLI cookies "$URL" --out web-uplift-evidence/cookies.json 2>&1 | tee web-uplift-evidence/cookies.log
-          $CLI trackers "$URL" --out web-uplift-evidence/trackers.json 2>&1 | tee web-uplift-evidence/trackers.log
-          $CLI images "$URL" --out web-uplift-evidence/images.json 2>&1 | tee web-uplift-evidence/images.log
-          $CLI secrets "$URL" --out web-uplift-evidence/secrets.json 2>&1 | tee web-uplift-evidence/secrets.log
+          $CLI har "$URL" --out web-uplift-evidence/network.har 2>&1 | tee web-uplift-evidence/har.log
           $CLI trace "$URL" --out web-uplift-evidence/trace 2>&1 | tee web-uplift-evidence/trace.log
 
           echo "--- ATHAR server log ---" > web-uplift-evidence/athar-server.log
