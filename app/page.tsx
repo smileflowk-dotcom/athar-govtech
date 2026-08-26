@@ -22,12 +22,12 @@ function ProductWorkspace({ compact = false }: ProductWorkspaceProps) {
   return (
     <div
       className={`${styles.productWindow} ${compact ? styles.productWindowCompact : ""}`}
-      aria-label="Aperçu du workspace ATHAR"
+      aria-label="Aperçu de l’espace ATHAR"
     >
       <div className={styles.windowBar}>
         <div className={styles.windowTitle}>
           <span className={styles.windowLogo}><ShieldCheck size={14} aria-hidden="true" /></span>
-          <strong>ATHAR · Dossier actif</strong>
+          <strong>ATHAR — Dossier actif</strong>
         </div>
         <span className={styles.windowStatus}><span /> Démonstrateur</span>
       </div>
@@ -37,15 +37,15 @@ function ProductWorkspace({ compact = false }: ProductWorkspaceProps) {
           <span className={styles.productLabel}>PIÈCES DU DOSSIER</span>
           <div className={`${styles.productItem} ${styles.productItemActive}`}>
             <FileText size={13} aria-hidden="true" />
-            <span><strong>CPS · page 6</strong><small>Clause technique</small></span>
+            <span><strong>CPS — page 6</strong><small>Clause technique</small></span>
           </div>
           <div className={styles.productItem}>
             <FileText size={13} aria-hidden="true" />
-            <span><strong>Grille · page 17</strong><small>Notation des offres</small></span>
+            <span><strong>Grille — page 17</strong><small>Notation des offres</small></span>
           </div>
           <div className={styles.productItem}>
             <FileText size={13} aria-hidden="true" />
-            <span><strong>PV · page 18</strong><small>Attribution</small></span>
+            <span><strong>PV — page 18</strong><small>Attribution</small></span>
           </div>
           <span className={`${styles.productLabel} ${styles.productLabelSpaced}`}>POINTS À VÉRIFIER</span>
           <div className={styles.productIssue}>
@@ -55,7 +55,7 @@ function ProductWorkspace({ compact = false }: ProductWorkspaceProps) {
         </aside>
 
         <section className={styles.productDocument} aria-label="Passage source">
-          <div className={styles.documentTopline}><span>PIÈCE SOURCE</span><strong>CPS · page 6</strong></div>
+          <div className={styles.documentTopline}><span>PIÈCE SOURCE</span><strong>CPS — page 6</strong></div>
           <div className={styles.paperSheet}>
             <span className={styles.paperKicker}>CAHIER DES PRESCRIPTIONS SPÉCIALES</span>
             <span className={styles.paperLine} />
@@ -65,7 +65,7 @@ function ProductWorkspace({ compact = false }: ProductWorkspaceProps) {
             <span className={styles.paperLine} />
             <span className={`${styles.paperLine} ${styles.paperLineShort}`} />
             <span className={styles.paperLine} />
-            <span className={styles.sourceAnchor}><FileSearch2 size={12} aria-hidden="true" /> Passage relié au point à vérifier</span>
+            <span className={styles.sourceAnchor}><FileSearch2 size={12} aria-hidden="true" /> Passage source relié</span>
           </div>
         </section>
 
@@ -89,15 +89,15 @@ export default function Home() {
 
       <header className={styles.header}>
         <div className={styles.headerInner}>
-          <Link href="/" className={styles.brand} aria-label="ATHAR — accueil">
+          <Link href="/" className={styles.brand} aria-label="Accueil ATHAR">
             <span className={styles.brandMark}><ShieldCheck size={19} aria-hidden="true" /></span>
-            <span className={styles.brandText}><strong>ATHAR</strong><small>Chaque alerte mène à sa preuve.</small></span>
+            <span className={styles.brandText}><strong>ATHAR</strong><small>Chaque alerte mène à sa preuve</small></span>
           </Link>
           <nav className={styles.nav} aria-label="Navigation principale">
             <a href="#enjeu">Enjeu</a>
             <a href="#approche">Approche</a>
-            <a href="#workspace">Workspace</a>
-            <a href="#preuve">Preuve</a>
+            <a href="#workspace">Espace produit</a>
+            <a href="#preuve">Preuves</a>
             <a href="#souverainete">Souveraineté</a>
             <Link href="/v3" className={styles.navDemo}>Ouvrir le démonstrateur <ArrowRight size={14} aria-hidden="true" /></Link>
           </nav>
@@ -106,8 +106,8 @@ export default function Home() {
 
       <section className={styles.hero} aria-labelledby="hero-title">
         <div className={styles.heroCopy}>
-          <span className={styles.eyebrow}>GOVTECH · CONTRÔLE PUBLIC</span>
-          <h1 id="hero-title">Une solution souveraine pour des contrôles publics plus crédibles, plus traçables et toujours validés par l’humain.</h1>
+          <span className={styles.eyebrow}>GOVTECH — CONTRÔLE PUBLIC</span>
+          <h1 id="hero-title">Des contrôles publics souverains, traçables et validés par l’humain</h1>
           <p className={styles.heroLead}>ATHAR permet aux institutions publiques d’examiner des dossiers complexes, retrouver les éléments de preuve et documenter chaque contrôle de manière souveraine et traçable.</p>
           <div className={styles.heroActions}>
             <Link href="/v3" className={styles.primaryButton}>Ouvrir le démonstrateur <ArrowRight size={16} aria-hidden="true" /></Link>
@@ -121,21 +121,21 @@ export default function Home() {
         </div>
         <div className={styles.heroVisual}>
           <ProductWorkspace />
-          <p className={styles.visualCaption}><span>APERÇU DU PRODUIT</span> Un workspace de contrôle centré sur le dossier.</p>
+          <p className={styles.visualCaption}><span>ESPACE PRODUIT</span> Un espace de contrôle centré sur le dossier</p>
         </div>
       </section>
 
       <section className={styles.signature} aria-label="Principe ATHAR">
         <div className={styles.signatureInner}>
           <span className={styles.signatureIndex}>01</span>
-          <strong>Chaque alerte mène à sa preuve.</strong>
-          <p>Le signal ouvre un travail de vérification. Il ne remplace ni les sources, ni le jugement du contrôleur.</p>
+          <strong>Chaque alerte mène à sa preuve</strong>
+          <p>Le signal ouvre un travail de vérification. Il ne remplace ni les sources ni le jugement du contrôleur.</p>
         </div>
       </section>
 
       <section className={`${styles.section} ${styles.problemSection}`} id="enjeu" aria-labelledby="enjeu-title">
         <div className={styles.sectionIntro}>
-          <div><span className={styles.eyebrow}>PROBLÈME / ENJEU</span><h2 id="enjeu-title">Le contrôle ne manque pas de données. Il manque un chemin vérifiable.</h2></div>
+          <div><span className={styles.eyebrow}>ENJEU</span><h2 id="enjeu-title">Un chemin vérifiable pour chaque contrôle</h2></div>
           <p>Les pièces, les données et les procès-verbaux doivent être rapprochés avant de pouvoir confirmer un point. La recherche et la justification restent souvent dispersées.</p>
         </div>
         <div className={styles.problemGrid}>
@@ -146,41 +146,41 @@ export default function Home() {
           </article>
           <article className={styles.problemCard}>
             <span className={styles.cardIcon}><Scale size={18} aria-hidden="true" /></span>
-            <h3>Rapprochement coûteux</h3>
+            <h3>Rapprochement</h3>
             <p>Règle, attendu et observé doivent être comparés sans perdre la provenance de l’information.</p>
           </article>
           <article className={styles.problemCard}>
             <span className={styles.cardIcon}><FileCheck2 size={18} aria-hidden="true" /></span>
-            <h3>Justification à reconstruire</h3>
+            <h3>Justification</h3>
             <p>Un constat utile doit pouvoir revenir à la pièce et au passage qui le fondent.</p>
           </article>
         </div>
-        <p className={styles.cautionNote}><CheckCircle2 size={15} aria-hidden="true" /> Une pièce manquante n’est pas une anomalie : elle doit être signalée comme telle.</p>
+        <p className={styles.cautionNote}><CheckCircle2 size={15} aria-hidden="true" /> Une pièce manquante n’est pas une anomalie : elle doit être signalée séparément.</p>
       </section>
 
       <section className={`${styles.section} ${styles.approachSection}`} id="approche" aria-labelledby="approche-title">
         <div className={styles.sectionIntro}>
-          <div><span className={styles.eyebrow}>COMMENT ATHAR FONCTIONNE</span><h2 id="approche-title">De la pièce au livrable, chaque étape reste lisible.</h2></div>
+          <div><span className={styles.eyebrow}>APPROCHE</span><h2 id="approche-title">De la pièce à la décision</h2></div>
           <p>ATHAR suit une voie directe autour du dossier, des points à vérifier et des preuves nécessaires à la décision.</p>
         </div>
         <ol className={styles.flow}>
-          <li><span className={styles.flowNumber}>01</span><BookOpen size={19} aria-hidden="true" /><h3>Regrouper</h3><p>Réunir les pièces et conserver leur provenance.</p></li>
-          <li><span className={styles.flowNumber}>02</span><Scale size={19} aria-hidden="true" /><h3>Contrôler</h3><p>Appliquer des contrôles explicites au contexte du dossier.</p></li>
-          <li><span className={styles.flowNumber}>03</span><FileSearch2 size={19} aria-hidden="true" /><h3>Prouver</h3><p>Revenir à la source, à la page et au passage utile.</p></li>
-          <li><span className={styles.flowNumber}>04</span><UserCheck size={19} aria-hidden="true" /><h3>Valider</h3><p>Confirmer, écarter ou demander une pièce.</p></li>
+          <li><span className={styles.flowNumber}>01</span><BookOpen size={19} aria-hidden="true" /><h3>Regrouper</h3><p>Réunir les pièces et conserver leur provenance</p></li>
+          <li><span className={styles.flowNumber}>02</span><Scale size={19} aria-hidden="true" /><h3>Contrôler</h3><p>Appliquer des contrôles explicites au contexte du dossier</p></li>
+          <li><span className={styles.flowNumber}>03</span><FileSearch2 size={19} aria-hidden="true" /><h3>Prouver</h3><p>Revenir à la source, à la page et au passage utile</p></li>
+          <li><span className={styles.flowNumber}>04</span><UserCheck size={19} aria-hidden="true" /><h3>Valider</h3><p>Confirmer, écarter ou demander une pièce</p></li>
         </ol>
       </section>
 
       <section className={`${styles.section} ${styles.workspaceSection}`} id="workspace" aria-labelledby="workspace-title">
         <div className={styles.sectionIntro}>
-          <div><span className={styles.eyebrow}>WORKSPACE / PRODUIT</span><h2 id="workspace-title">Un espace de contrôle conçu autour du dossier.</h2></div>
+          <div><span className={styles.eyebrow}>ESPACE PRODUIT</span><h2 id="workspace-title">Un espace conçu autour du dossier</h2></div>
           <p>Les pièces, le point à examiner, la règle et le passage source restent visibles dans le même contexte de travail.</p>
         </div>
         <div className={styles.workspaceShowcase}>
           <div className={styles.workspaceProduct}><ProductWorkspace compact /></div>
           <div className={styles.workspaceCopy}>
             <span className={styles.featureNumber}>02</span>
-            <h3>Voir, comprendre, décider.</h3>
+            <h3>Le contrôle, dans son contexte</h3>
             <p>À gauche, les pièces et la file des points à vérifier. Au centre, le passage source. À droite, la règle, l’attendu, l’observé et la décision.</p>
             <ul className={styles.featureList}>
               <li><CheckCircle2 size={15} aria-hidden="true" /> Pièces du dossier</li>
@@ -196,7 +196,7 @@ export default function Home() {
       <section className={styles.evidenceSection} id="preuve" aria-labelledby="preuve-title">
         <div className={styles.evidenceInner}>
           <div className={styles.sectionIntroDark}>
-            <div><span className={styles.eyebrowDark}>PREUVES & TRAÇABILITÉ</span><h2 id="preuve-title">Chaque alerte mène à sa preuve.</h2></div>
+            <div><span className={styles.eyebrowDark}>PREUVES & TRAÇABILITÉ</span><h2 id="preuve-title">Chaque alerte mène à sa preuve</h2></div>
             <p>ATHAR ne demande pas de croire un signal. Il montre ce qui l’a déclenché, où le retrouver et ce qui manque encore pour décider.</p>
           </div>
           <div className={styles.evidenceLayout}>
@@ -220,8 +220,8 @@ export default function Home() {
         <div className={styles.humanLayout}>
           <div className={styles.humanCopy}>
             <span className={styles.eyebrow}>CONTRÔLE HUMAIN</span>
-            <h2 id="humain-title">ATHAR signale. Le contrôleur décide.</h2>
-            <p>Aucun point détecté par ATHAR ne devient automatiquement un constat définitif. Le contrôleur peut confirmer, écarter, demander une pièce ou laisser le point en attente.</p>
+            <h2 id="humain-title">ATHAR signale, le contrôleur décide</h2>
+            <p>Aucun point signalé par ATHAR ne devient automatiquement un constat définitif. Le contrôleur peut confirmer, écarter, demander une pièce ou laisser le point en attente.</p>
             <p className={styles.smallNote}>La justification reste reliée aux éléments examinés.</p>
           </div>
           <div className={styles.decisionCard}>
@@ -237,12 +237,12 @@ export default function Home() {
       <section className={`${styles.section} ${styles.sovereigntySection}`} id="souverainete" aria-labelledby="souverainete-title">
         <div className={styles.sovereigntyLayout}>
           <div>
-            <span className={styles.eyebrow}>SOUVERAINETÉ & DÉPLOIEMENT</span>
-            <h2 id="souverainete-title">L’institution garde la maîtrise de ses documents, de ses preuves et de ses décisions.</h2>
+            <span className={styles.eyebrow}>SOUVERAINETÉ</span>
+            <h2 id="souverainete-title">L’institution garde la maîtrise</h2>
             <p>Dans le scénario on-premise cible, ATHAR est conçu pour fonctionner dans l’environnement institutionnel autorisé. Les documents, preuves, décisions et livrables restent dans le périmètre défini par l’institution. Les accès, le chiffrement, la journalisation et l’homologation se cadrent avec la DSI.</p>
           </div>
-          <div className={styles.boundaryCard} aria-label="Principe de déploiement institutionnel">
-            <div className={styles.boundaryHeader}><span className={styles.boundaryTag}><Server size={14} aria-hidden="true" /> TRAJECTOIRE CIBLE</span><span>ENVIRONNEMENT AUTORISÉ</span></div>
+          <div className={styles.boundaryCard} aria-label="Déploiement institutionnel">
+            <div className={styles.boundaryHeader}><span className={styles.boundaryTag}><Server size={14} aria-hidden="true" /> SCÉNARIO CIBLE</span><span>ENVIRONNEMENT AUTORISÉ</span></div>
             <div className={styles.boundaryFlow}>
               <div><FileText size={17} aria-hidden="true" /><strong>Documents</strong><small>Sources sensibles</small></div>
               <span className={styles.boundaryArrow}>→</span>
@@ -257,15 +257,15 @@ export default function Home() {
 
       <section className={`${styles.section} ${styles.useCasesSection}`} aria-labelledby="cas-title">
         <div className={styles.sectionIntro}>
-          <div><span className={styles.eyebrow}>CAS D’USAGE</span><h2 id="cas-title">Un même principe pour des dossiers publics qui exigent des faits et des sources.</h2></div>
+          <div><span className={styles.eyebrow}>CAS D’USAGE</span><h2 id="cas-title">Un socle pour plusieurs contrôles publics</h2></div>
           <p>La commande publique est le premier terrain démontré. Les extensions dépendent des règles, des sources et des livrables cadrés avec chaque institution.</p>
         </div>
         <div className={styles.useCasesGrid}>
           <article className={`${styles.useCaseCard} ${styles.useCaseActive}`}>
-            <div className={styles.useCaseTop}><span className={styles.useCaseStatus}>DÉMONTRÉ AUJOURD’HUI</span><Scale size={19} aria-hidden="true" /></div>
+            <div className={styles.useCaseTop}><span className={styles.useCaseStatus}>DÉMONTRÉ</span><Scale size={19} aria-hidden="true" /></div>
             <h3>Commande publique</h3>
             <p>Examiner la mise en concurrence, l’évaluation des offres et l’attribution.</p>
-            <div className={styles.useCaseTags}><span>Contrôles déterministes</span><span>Données fictives</span></div>
+            <div className={styles.useCaseTags}><span>Règles explicites</span><span>Données fictives</span></div>
           </article>
           <article className={styles.useCaseCard}>
             <div className={styles.useCaseTop}><span className={styles.useCaseStatusMuted}>À CADRER</span><FileSearch2 size={19} aria-hidden="true" /></div>
@@ -277,14 +277,14 @@ export default function Home() {
             <div className={styles.useCaseTop}><span className={styles.useCaseStatusMuted}>À CADRER</span><FileCheck2 size={19} aria-hidden="true" /></div>
             <h3>Revues administratives</h3>
             <p>Des dossiers où la décision doit rester reliée aux faits et aux pièces.</p>
-            <div className={styles.useCaseTags}><span>Après validation du besoin</span></div>
+            <div className={styles.useCaseTags}><span>Périmètre à définir</span></div>
           </article>
         </div>
       </section>
 
       <section className={`${styles.section} ${styles.whySection}`} aria-labelledby="why-title">
         <div className={styles.sectionIntro}>
-          <div><span className={styles.eyebrow}>POURQUOI ATHAR</span><h2 id="why-title">La vitesse compte. La défendabilité aussi.</h2></div>
+          <div><span className={styles.eyebrow}>POURQUOI ATHAR</span><h2 id="why-title">Contrôler plus vite sans sacrifier la preuve</h2></div>
           <p>ATHAR rassemble les exigences essentielles d’un environnement de contrôle professionnel, sans confier la décision à une boîte noire.</p>
         </div>
         <div className={styles.principlesGrid}>
@@ -297,16 +297,16 @@ export default function Home() {
 
       <section className={styles.finalCta} aria-labelledby="final-title">
         <div className={styles.finalCtaInner}>
-          <div><span className={styles.eyebrowDark}>DÉMONSTRATEUR FONCTIONNEL</span><h2 id="final-title">Examinez un dossier. Suivez la preuve. Décidez en connaissance de cause.</h2><p>Le démonstrateur présente un dossier fictif et le parcours complet : point à vérifier, règle, preuve, décision humaine et fiche de constat provisoire.</p></div>
-          <div className={styles.finalCtaAction}><Link href="/v3" className={styles.lightButton}>Ouvrir le démonstrateur <ArrowRight size={16} aria-hidden="true" /></Link><span><CheckCircle2 size={14} aria-hidden="true" /> Données fictives · validation humaine requise</span></div>
+          <div><span className={styles.eyebrowDark}>DÉMONSTRATEUR</span><h2 id="final-title">Examinez le dossier, vérifiez la preuve, décidez</h2><p>Le démonstrateur présente un dossier fictif et le parcours complet : point à vérifier, règle, preuve, décision humaine et fiche de constat provisoire.</p></div>
+          <div className={styles.finalCtaAction}><Link href="/v3" className={styles.lightButton}>Ouvrir le démonstrateur <ArrowRight size={16} aria-hidden="true" /></Link><span><CheckCircle2 size={14} aria-hidden="true" /> Données fictives, validation humaine requise</span></div>
         </div>
       </section>
 
       <footer className={styles.footer}>
         <div className={styles.footerInner}>
-          <Link href="/" className={styles.footerBrand}><span className={styles.footerMark}><ShieldCheck size={15} aria-hidden="true" /></span><span><strong>ATHAR</strong><small>Chaque alerte mène à sa preuve.</small></span></Link>
-          <nav className={styles.footerNav} aria-label="Navigation secondaire"><a href="#approche">Approche</a><a href="#preuve">Preuve</a><a href="#souverainete">Souveraineté</a><Link href="/v3">Démonstrateur</Link></nav>
-          <p>Solution GovTech pour les environnements de contrôle public.<br /><span>Démonstrateur fonctionnel · données présentées fictives.</span></p>
+          <Link href="/" className={styles.footerBrand}><span className={styles.footerMark}><ShieldCheck size={15} aria-hidden="true" /></span><span><strong>ATHAR</strong><small>Chaque alerte mène à sa preuve</small></span></Link>
+          <nav className={styles.footerNav} aria-label="Navigation secondaire"><a href="#approche">Approche</a><a href="#preuve">Preuves</a><a href="#souverainete">Souveraineté</a><Link href="/v3">Démonstrateur</Link></nav>
+          <p>Solution GovTech pour les environnements de contrôle public<br /><span>Démonstrateur fonctionnel, données fictives</span></p>
         </div>
       </footer>
     </main>
