@@ -207,9 +207,9 @@ export default function AtharV3() {
         <div><strong>ATHAR</strong><span>Chaque alerte mène à sa preuve.</span></div>
       </div>
       <nav className={styles.nav} aria-label="Navigation principale">
-        <button className={view === "dossiers" ? styles.active : ""} onClick={() => setView("dossiers")}>Dossiers</button>
-        <button className={view === "workspace" ? styles.active : ""} onClick={() => setView("workspace")}>Contrôle</button>
-        <button className={view === "livrer" ? styles.active : ""} onClick={() => setView("livrer")}>Livrables</button>
+        <button type="button" className={view === "dossiers" ? styles.active : ""} onClick={() => setView("dossiers")}>Dossiers</button>
+        <button type="button" className={view === "workspace" ? styles.active : ""} onClick={() => setView("workspace")}>Contrôle</button>
+        <button type="button" className={view === "livrer" ? styles.active : ""} onClick={() => setView("livrer")}>Livrables</button>
       </nav>
       <div className={styles.context}><span>DOSSIER ACTIF</span><strong>{dossier.title}</strong><span>{dossier.buyer ?? "Acheteur non renseigné"}</span></div>
     </header>
@@ -278,8 +278,22 @@ export default function AtharV3() {
     </>}
 
     {view === "livrer" && <>
-      <section className={styles.pageHeading}><div><span className={styles.eyebrow}>LIVRABLES</span><h1>Livrables du contrôle</h1><p>Seuls les constats confirmés alimentent les livrables.</p></div></section>
-      <section className={styles.deliverables}><article className={styles.deliverable}><FileCheck2 size={24}/><h3>Synthèse du contrôle</h3><p>{confirmed.length} constat(s) confirmé(s), relié(s) à leur règle, leur preuve et leur validation.</p><button className={styles.primary} disabled={!confirmed.length} onClick={() => setPreview(true)}>Prévisualiser</button></article><article className={styles.deliverable}><ShieldCheck size={24}/><h3>Dossier de preuves</h3><p>Sources, passages utiles et décisions humaines regroupés pour revue institutionnelle.</p></article></section>
+      <section className={styles.pageHeading}>
+        <div><span className={styles.eyebrow}>LIVRABLES</span><h1>Livrables du contrôle</h1><p>{confirmed.length ? `${confirmed.length} constat(s) confirmé(s) peuvent être livrés.` : "Aucun constat confirmé pour le moment. Les livrables restent accessibles sans produire de conclusion automatique."}</p></div>
+        <button type="button" className={styles.button} onClick={() => setView("workspace")}>Revenir au contrôle</button>
+      </section>
+      <section className={styles.deliverables}>
+        <article className={styles.deliverable}>
+          <FileCheck2 size={24}/><h3>Synthèse du contrôle</h3>
+          <p>{confirmed.length ? `${confirmed.length} constat(s) confirmé(s), relié(s) à leur règle, leur preuve et leur validation.` : "La synthèse se construit uniquement à partir des décisions confirmées par le contrôleur."}</p>
+          {confirmed.length ? <button type="button" className={styles.primary} onClick={() => setPreview(true)}>Prévisualiser la synthèse</button> : <button type="button" className={styles.button} onClick={() => setView("workspace")}>Valider un point</button>}
+        </article>
+        <article className={styles.deliverable}>
+          <ShieldCheck size={24}/><h3>Dossier de preuves</h3>
+          <p>{dossierSources.length} source(s) et {dossier.alerts.length} point(s) de contrôle sont reliés dans le dossier actif.</p>
+          <button type="button" className={styles.button} onClick={() => setView("workspace")}>Ouvrir les preuves</button>
+        </article>
+      </section>
     </>}
 
     {preview && <div className={styles.modal} onMouseDown={() => setPreview(false)}><section className={styles.modalCard} onMouseDown={(event) => event.stopPropagation()}><div className={styles.modalHeader}><div><span className={styles.eyebrow}>FICHE DE CONSTAT PROVISOIRE</span><h2>{dossier.title}</h2></div><button className={styles.button} onClick={() => setPreview(false)}>Fermer</button></div><p className={styles.warning}>Document de travail — validation institutionnelle requise.</p>{confirmed.map((item, index) => <article className={styles.finding} key={item.id}><span className={styles.eyebrow}>CONSTAT {index + 1}</span><h3>{item.type}</h3><dl><dt>Règle</dt><dd>{item.rule}</dd><dt>Attendu</dt><dd>{item.expected}</dd><dt>Observé</dt><dd>{item.observed}</dd><dt>Preuve</dt><dd>{item.evidence}</dd><dt>Décision</dt><dd>{item.decisionNote}</dd></dl><button className={styles.linkButton} onClick={() => { setPreview(false); chooseAlert(item.id); }}>Revenir à la preuve</button></article>)}</section></div>}
