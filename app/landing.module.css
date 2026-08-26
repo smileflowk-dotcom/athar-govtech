@@ -27,18 +27,18 @@
 .brandMark { height: 37px; width: 37px; }
 .brandText, .footerBrand > span:last-child { display: block; }
 .brandText strong, .footerBrand strong { display: block; font-size: 15px; letter-spacing: .12em; }
-.brandText small, .footerBrand small { color: var(--landing-muted); display: block; font-size: 10px; margin-top: 3px; }
+.brandText small, .footerBrand small { color: #81908f; display: block; font-size: 9px; letter-spacing: .01em; margin-top: 3px; }
 .nav { align-items: center; display: flex; gap: 18px; }
 .nav a { color: #405155; font-size: 12px; font-weight: 700; text-decoration: none; }
 .nav a:hover, .footerNav a:hover { color: var(--landing-teal); }
-.navDemo { align-items: center; background: var(--landing-deep); border-radius: 6px; color: #fff !important; display: inline-flex; gap: 7px; padding: 10px 13px; }
+.nav a.navDemo { align-items: center; background: var(--landing-deep); border-radius: 6px; color: #fff !important; display: inline-flex; font-weight: 500; gap: 7px; letter-spacing: .01em; padding: 10px 13px; }
 
 .hero { align-items: center; display: grid; gap: clamp(42px, 6vw, 86px); grid-template-columns: minmax(0, .92fr) minmax(480px, 1.08fr); margin: 0 auto; max-width: 1240px; padding: clamp(72px, 8vw, 118px) 30px 82px; }
 .heroCopy { max-width: 610px; }
 .eyebrow, .eyebrowDark { display: block; font-size: 10px; font-weight: 850; letter-spacing: .14em; text-transform: uppercase; }
 .eyebrow { color: #5f706f; }
 .eyebrowDark { color: #a9c2ba; }
-.hero h1 { font-size: clamp(42px, 5vw, 67px); letter-spacing: -.055em; line-height: 1.02; margin: 19px 0 24px; max-width: 650px; }
+.hero h1 { font-size: clamp(40px, 3.8vw, 56px); font-weight: 600; letter-spacing: -.05em; line-height: 1.06; margin: 19px 0 24px; max-width: 610px; }
 .heroLead { color: var(--landing-muted); font-size: 17px; line-height: 1.72; margin: 0; max-width: 610px; }
 .heroActions { align-items: center; display: flex; flex-wrap: wrap; gap: 11px; margin-top: 31px; }
 .primaryButton, .secondaryButton, .lightButton { align-items: center; border-radius: 7px; display: inline-flex; font-size: 13px; font-weight: 800; gap: 9px; justify-content: center; padding: 13px 17px; text-decoration: none; }
@@ -97,7 +97,7 @@
 
 .section { margin: 0 auto; max-width: 1240px; padding: 95px 30px; }
 .sectionIntro { align-items: end; display: grid; gap: clamp(35px, 7vw, 90px); grid-template-columns: minmax(0, .9fr) minmax(280px, 1.1fr); margin-bottom: 46px; }
-.sectionIntro h2, .sectionIntroDark h2 { font-size: clamp(31px, 4vw, 47px); letter-spacing: -.05em; line-height: 1.07; margin: 10px 0 0; max-width: 650px; }
+.sectionIntro h2, .sectionIntroDark h2 { font-size: clamp(31px, 3.5vw, 43px); letter-spacing: -.05em; line-height: 1.08; margin: 10px 0 0; max-width: 650px; }
 .sectionIntro > p, .sectionIntroDark > p { color: var(--landing-muted); font-size: 14px; line-height: 1.75; margin: 0; max-width: 590px; }
 .problemSection { padding-top: 91px; }
 .problemGrid { border-top: 1px solid var(--landing-line); display: grid; grid-template-columns: repeat(3, 1fr); }
@@ -160,7 +160,7 @@
 .humanSection { padding-bottom: 88px; padding-top: 88px; }
 .humanLayout { align-items: center; display: grid; gap: clamp(45px, 8vw, 120px); grid-template-columns: minmax(0, 1fr) minmax(300px, .78fr); margin: 0 auto; max-width: 1000px; }
 .humanCopy { max-width: 560px; }
-.humanCopy h2, .sovereigntyLayout h2 { font-size: clamp(31px, 4vw, 47px); letter-spacing: -.05em; line-height: 1.07; margin: 11px 0 19px; }
+.humanCopy h2, .sovereigntyLayout h2 { font-size: clamp(31px, 3.5vw, 43px); letter-spacing: -.05em; line-height: 1.08; margin: 11px 0 19px; }
 .humanCopy p, .sovereigntyLayout p { color: var(--landing-muted); font-size: 15px; line-height: 1.75; margin: 0; }
 .smallNote { border-left: 3px solid var(--landing-teal); color: #49605f !important; font-size: 13px !important; margin-top: 23px !important; padding-left: 13px; }
 .decisionCard { background: #fff; border: 1px solid var(--landing-line); border-radius: 9px; box-shadow: 0 18px 40px rgba(20, 48, 50, .09); padding: 19px; }
@@ -244,7 +244,7 @@
 @media (max-width: 820px) {
   .headerInner { min-height: 64px; }
   .nav a { display: none; }
-  .navDemo { font-size: 11px; padding: 9px 10px; }
+  .nav a.navDemo { font-size: 11px; padding: 9px 10px; }
   .hero { grid-template-columns: 1fr; padding-bottom: 65px; padding-top: 66px; }
   .heroCopy { max-width: 700px; }
   .heroVisual { max-width: 700px; width: 100%; }
