@@ -7,7 +7,6 @@ import {
   CircleX,
   FileCheck2,
   FileSearch2,
-  FolderOpen,
   History,
   Loader2,
   Search,
@@ -62,7 +61,7 @@ function sourceName(item: EvidenceItem) {
 
 export default function AtharV3() {
   const [view, setView] = useState<View>("dossiers");
-  const [dossiers, setDossiers] = useState(demoDossiers);
+  const [dossiers, setDossiers] = useState<Dossier[]>(demoDossiers);
   const [dossierId, setDossierId] = useState(demoDossiers[0].id);
   const [alertId, setAlertId] = useState(demoDossiers[0].alerts[0]?.id ?? "");
   const [note, setNote] = useState("");
@@ -81,15 +80,16 @@ export default function AtharV3() {
     () => dossiers.filter((item) => `${item.title} ${item.buyer ?? ""}`.toLowerCase().includes(query.toLowerCase())),
     [dossiers, query],
   );
-  const evidenceItems = alert ? alert.evidenceItems ?? fallbackEvidence(alert) : [];
+  const evidenceItems = alert ? (alert.evidenceItems ?? fallbackEvidence(alert)) : [];
   const selectedEvidence = evidenceItems[0];
-  const isDemoJourney = dossier.id === "poc-complete-journey";
 
   const dossierSources = useMemo(() => {
     const map = new Map<string, EvidenceItem>();
-    dossier.alerts.forEach((item) => (item.evidenceItems ?? fallbackEvidence(item)).forEach((evidence) => {
-      if (!map.has(sourceName(evidence))) map.set(sourceName(evidence), evidence);
-    }));
+    dossier.alerts.forEach((item) => {
+      (item.evidenceItems ?? fallbackEvidence(item)).forEach((evidence) => {
+        if (!map.has(sourceName(evidence))) map.set(sourceName(evidence), evidence);
+      });
+    });
     return Array.from(map.values());
   }, [dossier]);
 
@@ -197,6 +197,9 @@ export default function AtharV3() {
     }
   }
 
+  const pieceCount = dossier.documentCount ?? (dossierSources.length || 1);
+  const openPointCount = dossier.alerts.filter((item) => item.status === "pending").length;
+
   return <main className={styles.shell}>
     <header className={styles.header}>
       <div className={styles.brand}>
@@ -208,11 +211,7 @@ export default function AtharV3() {
         <button className={view === "workspace" ? styles.active : ""} onClick={() => setView("workspace")}>Contrôle</button>
         <button className={view === "livrer" ? styles.active : ""} onClick={() => setView("livrer")}>Livrables</button>
       </nav>
-      <div className={styles.context}>
-        <span>DOSSIER ACTIF</span>
-        <strong>{dossier.title}</strong>
-        <span>{dossier.buyer ?? "Acheteur non renseigné"}</span>
-      </div>
+      <div className={styles.context}><span>DOSSIER ACTIF</span><strong>{dossier.title}</strong><span>{dossier.buyer ?? "Acheteur non renseigné"}</span></div>
     </header>
 
     {sourceError && <div className={styles.error}>{sourceError}</div>}
@@ -231,8 +230,7 @@ export default function AtharV3() {
         <div className={styles.caseTable}>
           <div className={styles.caseTableHead}><span>Dossier</span><span>Acheteur</span><span>Procédure</span><span>Pièces</span><span>Points</span><span>État</span></div>
           {visibleDossiers.map((item) => <button key={item.id} className={`${styles.caseRow} ${item.id === dossier.id ? styles.activeCaseRow : ""}`} onClick={() => { chooseDossier(item.id); setView("workspace"); }}>
-            <span><strong>{item.title}</strong><small>{item.id}</small></span>
-            <span>{item.buyer ?? "—"}</span><span>{item.procedure ?? "À qualifier"}</span><span>{item.documentCount ?? 1}</span><span>{item.alerts.length}</span><span className={styles.caseState}>En contrôle</span>
+            <span><strong>{item.title}</strong><small>{item.id}</small></span><span>{item.buyer ?? "—"}</span><span>{item.procedure ?? "À qualifier"}</span><span>{item.documentCount ?? 1}</span><span>{item.alerts.length}</span><span className={styles.caseState}>En contrôle</span>
           </button>)}
         </div>
       </section>
@@ -241,7 +239,7 @@ export default function AtharV3() {
     {view === "workspace" && <>
       <section className={styles.caseHeader}>
         <div><span className={styles.breadcrumb}>Dossiers / {dossier.id}</span><h1>{dossier.title}</h1><p>{dossier.buyer ?? "Acheteur non renseigné"} · {dossier.procedure ?? "Procédure à qualifier"}</p></div>
-        <div className={styles.caseHeaderMeta}><span>{dossier.documentCount ?? dossierSources.length || 1} pièce(s)</span><span>{dossier.alerts.filter((item) => item.status === "pending").length} point(s) ouvert(s)</span><button className={styles.button} onClick={() => setHistoryOpen((value) => !value)}><History size={15}/> Historique</button></div>
+        <div className={styles.caseHeaderMeta}><span>{pieceCount} pièce(s)</span><span>{openPointCount} point(s) ouvert(s)</span><button className={styles.button} onClick={() => setHistoryOpen((value) => !value)}><History size={15}/> Historique</button></div>
       </section>
 
       {historyOpen && <section className={styles.historyStrip}><strong>Historique du dossier</strong><span>Pièces importées</span><span>Contrôles exécutés</span><span>{confirmed.length} décision(s) confirmée(s)</span><small>Le journal détaillé sera enrichi lors de l’industrialisation.</small></section>}
