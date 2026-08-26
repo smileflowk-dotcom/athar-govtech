@@ -1,122 +1,318 @@
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, FileSearch2, ShieldCheck } from "lucide-react";
+import {
+  ArrowRight,
+  BookOpen,
+  CheckCircle2,
+  FileCheck2,
+  FileSearch2,
+  FileText,
+  LockKeyhole,
+  Scale,
+  Server,
+  ShieldCheck,
+  UserCheck,
+} from "lucide-react";
 import styles from "./landing.module.css";
+
+type ProductWorkspaceProps = {
+  compact?: boolean;
+};
+
+function ProductWorkspace({ compact = false }: ProductWorkspaceProps) {
+  return (
+    <div
+      className={`${styles.productWindow} ${compact ? styles.productWindowCompact : ""}`}
+      aria-label="Aperçu du workspace ATHAR"
+    >
+      <div className={styles.windowBar}>
+        <div className={styles.windowTitle}>
+          <span className={styles.windowLogo}><ShieldCheck size={14} aria-hidden="true" /></span>
+          <strong>ATHAR · Dossier actif</strong>
+        </div>
+        <span className={styles.windowStatus}><span /> Démonstrateur</span>
+      </div>
+
+      <div className={styles.productGrid}>
+        <aside className={styles.productRail}>
+          <span className={styles.productLabel}>PIÈCES DU DOSSIER</span>
+          <div className={`${styles.productItem} ${styles.productItemActive}`}>
+            <FileText size={13} aria-hidden="true" />
+            <span><strong>CPS · page 6</strong><small>Clause technique</small></span>
+          </div>
+          <div className={styles.productItem}>
+            <FileText size={13} aria-hidden="true" />
+            <span><strong>Grille · page 17</strong><small>Notation des offres</small></span>
+          </div>
+          <div className={styles.productItem}>
+            <FileText size={13} aria-hidden="true" />
+            <span><strong>PV · page 18</strong><small>Attribution</small></span>
+          </div>
+          <span className={`${styles.productLabel} ${styles.productLabelSpaced}`}>POINTS À VÉRIFIER</span>
+          <div className={styles.productIssue}>
+            <span className={styles.issueMarker} />
+            <span><strong>CTRL-ACC-01</strong><small>Clause potentiellement restrictive</small></span>
+          </div>
+        </aside>
+
+        <section className={styles.productDocument} aria-label="Passage source">
+          <div className={styles.documentTopline}><span>PIÈCE SOURCE</span><strong>CPS · page 6</strong></div>
+          <div className={styles.paperSheet}>
+            <span className={styles.paperKicker}>CAHIER DES PRESCRIPTIONS SPÉCIALES</span>
+            <span className={styles.paperLine} />
+            <span className={styles.paperLine} />
+            <span className={`${styles.paperLine} ${styles.paperLineShort}`} />
+            <p className={styles.paperHighlight}>« Le soumissionnaire doit être partenaire certifié agréé… »</p>
+            <span className={styles.paperLine} />
+            <span className={`${styles.paperLine} ${styles.paperLineShort}`} />
+            <span className={styles.paperLine} />
+            <span className={styles.sourceAnchor}><FileSearch2 size={12} aria-hidden="true" /> Passage relié au point à vérifier</span>
+          </div>
+        </section>
+
+        <aside className={styles.productControl}>
+          <span className={styles.productLabel}>POINT À VÉRIFIER</span>
+          <h3>Clause technique</h3>
+          <div className={styles.controlFact}><span>RÈGLE</span><p>Examiner les exigences susceptibles de limiter la concurrence.</p></div>
+          <div className={styles.controlFact}><span>ATTENDU</span><p>Spécifications proportionnées et ouvertes.</p></div>
+          <div className={styles.controlFact}><span>OBSERVÉ</span><p>Exigence de certification nominative.</p></div>
+          <div className={styles.decisionBar}><UserCheck size={13} aria-hidden="true" /> Décision du contrôleur</div>
+        </aside>
+      </div>
+    </div>
+  );
+}
 
 export default function Home() {
   return (
-    <main className={styles.page}>
+    <main className={styles.page} id="contenu">
+      <a className={styles.skipLink} href="#contenu">Aller au contenu</a>
+
       <header className={styles.header}>
-        <Link href="/" className={styles.brand} aria-label="ATHAR — accueil">
-          <span className={styles.mark}><ShieldCheck size={19} /></span>
-          <span><strong>ATHAR</strong><span>Chaque alerte mène à sa preuve.</span></span>
-        </Link>
-        <nav className={styles.nav} aria-label="Navigation principale">
-          <a href="#approche">Approche</a>
-          <a href="#preuve">Preuve</a>
-          <Link className={styles.demo} href="/v3">Ouvrir le démonstrateur</Link>
-        </nav>
+        <div className={styles.headerInner}>
+          <Link href="/" className={styles.brand} aria-label="ATHAR — accueil">
+            <span className={styles.brandMark}><ShieldCheck size={19} aria-hidden="true" /></span>
+            <span className={styles.brandText}><strong>ATHAR</strong><small>Chaque alerte mène à sa preuve.</small></span>
+          </Link>
+          <nav className={styles.nav} aria-label="Navigation principale">
+            <a href="#enjeu">Enjeu</a>
+            <a href="#approche">Approche</a>
+            <a href="#workspace">Workspace</a>
+            <a href="#preuve">Preuve</a>
+            <a href="#souverainete">Souveraineté</a>
+            <Link href="/v3" className={styles.navDemo}>Ouvrir le démonstrateur <ArrowRight size={14} aria-hidden="true" /></Link>
+          </nav>
+        </div>
       </header>
 
-      <section className={styles.hero}>
-        <div>
-          <span className={styles.eyebrow}>GovTech · Contrôle de la commande publique</span>
-          <h1>Du signal à la preuve, sans perdre le contrôleur.</h1>
-          <p>
-            ATHAR rapproche les pièces d’un marché, applique des contrôles explicables et conduit le contrôleur jusqu’aux éléments qui fondent sa décision. Le système signale. L’humain valide.
-          </p>
-          <div className={styles.actions}>
-            <Link href="/v3" className={styles.primary}>Explorer le PoC <ArrowRight size={16} /></Link>
-            <a href="#approche" className={styles.secondary}>Comprendre l’approche</a>
+      <section className={styles.hero} aria-labelledby="hero-title">
+        <div className={styles.heroCopy}>
+          <span className={styles.eyebrow}>GOVTECH · CONTRÔLE PUBLIC</span>
+          <h1 id="hero-title">Une solution souveraine pour des contrôles publics plus crédibles, plus traçables et toujours validés par l’humain.</h1>
+          <p className={styles.heroLead}>ATHAR permet aux institutions publiques d’examiner des dossiers complexes, retrouver les éléments de preuve et documenter chaque contrôle de manière souveraine et traçable.</p>
+          <div className={styles.heroActions}>
+            <Link href="/v3" className={styles.primaryButton}>Ouvrir le démonstrateur <ArrowRight size={16} aria-hidden="true" /></Link>
+            <a href="#approche" className={styles.secondaryButton}>Voir le parcours</a>
           </div>
-          <div className={styles.trust}>
-            <span><CheckCircle2 size={14} /> Provenance conservée</span>
-            <span><CheckCircle2 size={14} /> Contrôles explicables</span>
-            <span><CheckCircle2 size={14} /> Validation humaine</span>
+          <div className={styles.trustRow} aria-label="Principes ATHAR">
+            <span><CheckCircle2 size={14} aria-hidden="true" /> Preuves reliées aux sources</span>
+            <span><CheckCircle2 size={14} aria-hidden="true" /> Contrôles explicites</span>
+            <span><CheckCircle2 size={14} aria-hidden="true" /> Décision humaine</span>
           </div>
         </div>
-
-        <div className={styles.workbench} aria-label="Aperçu du poste de contrôle ATHAR">
-          <div className={styles.frame}>
-            <div className={styles.frameTop}><strong>ATHAR · Dossier actif</strong><span>Contrôle en cours</span></div>
-            <div className={styles.workspace}>
-              <aside className={styles.rail}>
-                <span className={styles.tinyLabel}>PIÈCES</span>
-                <div className={`${styles.item} ${styles.itemActive}`}><strong>CPS · page 6</strong><span>Clause technique</span></div>
-                <div className={styles.item}><strong>Grille · page 17</strong><span>Notation des offres</span></div>
-                <div className={styles.item}><strong>PV · page 18</strong><span>Attribution</span></div>
-                <span className={styles.tinyLabel} style={{display:"block",marginTop:20}}>POINTS À VÉRIFIER</span>
-                <div className={styles.item}><strong>CTRL-ACC-01</strong><span>Clause potentiellement restrictive</span></div>
-              </aside>
-              <section className={styles.document}>
-                <div className={styles.paper}>
-                  <div className={styles.line} /><div className={styles.line} /><div className={`${styles.line} ${styles.lineShort}`} />
-                  <div className={styles.highlight}>« Le soumissionnaire doit être partenaire certifié agréé… »</div>
-                  <div className={styles.line} /><div className={`${styles.line} ${styles.lineShort}`} /><div className={styles.line} />
-                </div>
-              </section>
-              <aside className={styles.control}>
-                <span className={styles.tinyLabel}>POINT À VÉRIFIER</span>
-                <h3>Clause technique</h3>
-                <div className={styles.fact}><strong>RÈGLE</strong><p>Examiner les exigences susceptibles de limiter la concurrence.</p></div>
-                <div className={styles.fact}><strong>ATTENDU</strong><p>Spécifications proportionnées et ouvertes.</p></div>
-                <div className={styles.fact}><strong>OBSERVÉ</strong><p>Exigence de certification nominative.</p></div>
-                <div className={styles.decision}>Décision du contrôleur</div>
-              </aside>
-            </div>
-          </div>
+        <div className={styles.heroVisual}>
+          <ProductWorkspace />
+          <p className={styles.visualCaption}><span>APERÇU DU PRODUIT</span> Un workspace de contrôle centré sur le dossier.</p>
         </div>
       </section>
 
-      <section className={styles.principle}>
-        <div className={styles.principleBox}>
+      <section className={styles.signature} aria-label="Principe ATHAR">
+        <div className={styles.signatureInner}>
+          <span className={styles.signatureIndex}>01</span>
           <strong>Chaque alerte mène à sa preuve.</strong>
-          <p>ATHAR n’automatise pas un verdict. Il rend le contrôle plus rapide, traçable et vérifiable en reliant chaque signal à sa règle, son attendu, son observé et ses sources.</p>
+          <p>Le signal ouvre un travail de vérification. Il ne remplace ni les sources, ni le jugement du contrôleur.</p>
         </div>
       </section>
 
-      <section className={styles.section} id="approche">
-        <div className={styles.sectionHead}>
-          <div><span className={styles.eyebrow}>PARCOURS DE CONTRÔLE</span><h2>Un dossier. Une chaîne de preuve. Une décision humaine.</h2></div>
-          <p>Le poste de travail est conçu autour du dossier de contrôle, pas autour d’un tableau de bord générique. Les pièces, les points à vérifier et la preuve restent visibles dans le même contexte.</p>
+      <section className={`${styles.section} ${styles.problemSection}`} id="enjeu" aria-labelledby="enjeu-title">
+        <div className={styles.sectionIntro}>
+          <div><span className={styles.eyebrow}>PROBLÈME / ENJEU</span><h2 id="enjeu-title">Le contrôle ne manque pas de données. Il manque un chemin vérifiable.</h2></div>
+          <p>Les pièces, les données et les procès-verbaux doivent être rapprochés avant de pouvoir confirmer un point. La recherche et la justification restent souvent dispersées.</p>
         </div>
-        <div className={styles.steps}>
-          <article className={styles.step}><span className={styles.number}>01</span><h3>Regrouper</h3><p>Importer et organiser les pièces du dossier tout en conservant leur provenance.</p></article>
-          <article className={styles.step}><span className={styles.number}>02</span><h3>Contrôler</h3><p>Appliquer des contrôles explicites et distinguer l’attendu de l’observé.</p></article>
-          <article className={styles.step}><span className={styles.number}>03</span><h3>Prouver</h3><p>Revenir à la pièce, la page et au passage utile, y compris dans un rapprochement multisource.</p></article>
-          <article className={styles.step}><span className={styles.number}>04</span><h3>Valider</h3><p>Confirmer, écarter ou demander une pièce avant d’alimenter les livrables.</p></article>
+        <div className={styles.problemGrid}>
+          <article className={styles.problemCard}>
+            <span className={styles.cardIcon}><LayersIcon /></span>
+            <h3>Sources dispersées</h3>
+            <p>Le contrôleur passe d’une pièce à l’autre pour reconstituer le contexte utile au dossier.</p>
+          </article>
+          <article className={styles.problemCard}>
+            <span className={styles.cardIcon}><Scale size={18} aria-hidden="true" /></span>
+            <h3>Rapprochement coûteux</h3>
+            <p>Règle, attendu et observé doivent être comparés sans perdre la provenance de l’information.</p>
+          </article>
+          <article className={styles.problemCard}>
+            <span className={styles.cardIcon}><FileCheck2 size={18} aria-hidden="true" /></span>
+            <h3>Justification à reconstruire</h3>
+            <p>Un constat utile doit pouvoir revenir à la pièce et au passage qui le fondent.</p>
+          </article>
+        </div>
+        <p className={styles.cautionNote}><CheckCircle2 size={15} aria-hidden="true" /> Une pièce manquante n’est pas une anomalie : elle doit être signalée comme telle.</p>
+      </section>
+
+      <section className={`${styles.section} ${styles.approachSection}`} id="approche" aria-labelledby="approche-title">
+        <div className={styles.sectionIntro}>
+          <div><span className={styles.eyebrow}>COMMENT ATHAR FONCTIONNE</span><h2 id="approche-title">De la pièce au livrable, chaque étape reste lisible.</h2></div>
+          <p>ATHAR suit une voie directe autour du dossier, des points à vérifier et des preuves nécessaires à la décision.</p>
+        </div>
+        <ol className={styles.flow}>
+          <li><span className={styles.flowNumber}>01</span><BookOpen size={19} aria-hidden="true" /><h3>Regrouper</h3><p>Réunir les pièces et conserver leur provenance.</p></li>
+          <li><span className={styles.flowNumber}>02</span><Scale size={19} aria-hidden="true" /><h3>Contrôler</h3><p>Appliquer des contrôles explicites au contexte du dossier.</p></li>
+          <li><span className={styles.flowNumber}>03</span><FileSearch2 size={19} aria-hidden="true" /><h3>Prouver</h3><p>Revenir à la source, à la page et au passage utile.</p></li>
+          <li><span className={styles.flowNumber}>04</span><UserCheck size={19} aria-hidden="true" /><h3>Valider</h3><p>Confirmer, écarter ou demander une pièce.</p></li>
+        </ol>
+      </section>
+
+      <section className={`${styles.section} ${styles.workspaceSection}`} id="workspace" aria-labelledby="workspace-title">
+        <div className={styles.sectionIntro}>
+          <div><span className={styles.eyebrow}>WORKSPACE / PRODUIT</span><h2 id="workspace-title">Un espace de contrôle conçu autour du dossier.</h2></div>
+          <p>Les pièces, le point à examiner, la règle et le passage source restent visibles dans le même contexte de travail.</p>
+        </div>
+        <div className={styles.workspaceShowcase}>
+          <div className={styles.workspaceProduct}><ProductWorkspace compact /></div>
+          <div className={styles.workspaceCopy}>
+            <span className={styles.featureNumber}>02</span>
+            <h3>Voir, comprendre, décider.</h3>
+            <p>À gauche, les pièces et la file des points à vérifier. Au centre, le passage source. À droite, la règle, l’attendu, l’observé et la décision.</p>
+            <ul className={styles.featureList}>
+              <li><CheckCircle2 size={15} aria-hidden="true" /> Pièces du dossier</li>
+              <li><CheckCircle2 size={15} aria-hidden="true" /> Points à vérifier</li>
+              <li><CheckCircle2 size={15} aria-hidden="true" /> Passage source relié</li>
+              <li><CheckCircle2 size={15} aria-hidden="true" /> Décision du contrôleur</li>
+            </ul>
+            <Link href="/v3" className={styles.primaryButton}>Ouvrir le démonstrateur <ArrowRight size={16} aria-hidden="true" /></Link>
+          </div>
         </div>
       </section>
 
-      <section className={styles.evidence} id="preuve">
+      <section className={styles.evidenceSection} id="preuve" aria-labelledby="preuve-title">
         <div className={styles.evidenceInner}>
-          <span className={styles.eyebrow}>EVIDENCE ENGINE</span>
-          <div className={styles.evidenceGrid}>
-            <h2>La preuve est un objet de travail, pas une note de bas de page.</h2>
-            <div>
-              <p>Une preuve ATHAR reste reliée à sa source, sa localisation et au point de contrôle qui l’utilise. Le rapprochement entre plusieurs pièces permet de rendre visibles les incohérences sans masquer le chemin documentaire.</p>
-              <div className={styles.chain}>
-                <div><FileSearch2 size={16} /><strong>Source</strong><span>Pièce originale</span></div>
-                <div><strong>Localisation</strong><span>Page / passage</span></div>
-                <div><strong>Contrôle</strong><span>Règle explicite</span></div>
-                <div><strong>Décision</strong><span>Validation humaine</span></div>
-                <div><strong>Historique</strong><span>Trace conservée</span></div>
-              </div>
+          <div className={styles.sectionIntroDark}>
+            <div><span className={styles.eyebrowDark}>PREUVES & TRAÇABILITÉ</span><h2 id="preuve-title">Chaque alerte mène à sa preuve.</h2></div>
+            <p>ATHAR ne demande pas de croire un signal. Il montre ce qui l’a déclenché, où le retrouver et ce qui manque encore pour décider.</p>
+          </div>
+          <div className={styles.evidenceLayout}>
+            <div className={styles.evidenceCard}>
+              <div className={styles.evidenceCardTop}><span className={styles.evidenceState}><CheckCircle2 size={13} aria-hidden="true" /> Preuve retrouvée</span><span>CTRL-ACC-01</span></div>
+              <span className={styles.evidenceLabel}>PASSAGE SOURCE RELIÉ</span>
+              <p>« Le soumissionnaire doit être partenaire certifié agréé… »</p>
+              <div className={styles.evidenceMeta}><span><FileText size={13} aria-hidden="true" /> CPS fictif</span><span>Page 6</span></div>
+            </div>
+            <div className={styles.evidenceChain} aria-label="Chaîne de traçabilité">
+              <div><span>01</span><strong>Source</strong><small>Pièce originale</small></div>
+              <div><span>02</span><strong>Localisation</strong><small>Page / passage</small></div>
+              <div><span>03</span><strong>Contrôle</strong><small>Règle explicite</small></div>
+              <div><span>04</span><strong>Décision</strong><small>Validation humaine</small></div>
             </div>
           </div>
         </div>
       </section>
 
-      <section className={styles.final}>
-        <span className={styles.eyebrow}>PROTOTYPE FONCTIONNEL</span>
-        <h2>Voir le parcours complet dans le poste de contrôle ATHAR.</h2>
-        <p>Le démonstrateur présente un dossier fictif complet et permet d’explorer le chemin du point à vérifier jusqu’à la preuve et au livrable.</p>
-        <Link href="/v3" className={styles.primary}>Ouvrir ATHAR <ArrowRight size={16} /></Link>
+      <section className={`${styles.section} ${styles.humanSection}`} aria-labelledby="humain-title">
+        <div className={styles.humanLayout}>
+          <div className={styles.humanCopy}>
+            <span className={styles.eyebrow}>CONTRÔLE HUMAIN</span>
+            <h2 id="humain-title">ATHAR signale. Le contrôleur décide.</h2>
+            <p>Aucun point détecté par ATHAR ne devient automatiquement un constat définitif. Le contrôleur peut confirmer, écarter, demander une pièce ou laisser le point en attente.</p>
+            <p className={styles.smallNote}>La justification reste reliée aux éléments examinés.</p>
+          </div>
+          <div className={styles.decisionCard}>
+            <div className={styles.decisionCardHeader}><span>POINT À VÉRIFIER</span><strong>À examiner</strong></div>
+            <h3>Clause technique</h3>
+            <p>Le passage source et la règle sont visibles avant toute action.</p>
+            <div className={styles.decisionNote}><span>DÉCISION DU CONTRÔLEUR</span><small>Justification requise</small></div>
+            <div className={styles.decisionActions}><span className={styles.decisionPrimary}><UserCheck size={14} aria-hidden="true" /> Confirmer</span><span>Demander une pièce</span><span>Écarter</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section className={`${styles.section} ${styles.sovereigntySection}`} id="souverainete" aria-labelledby="souverainete-title">
+        <div className={styles.sovereigntyLayout}>
+          <div>
+            <span className={styles.eyebrow}>SOUVERAINETÉ & DÉPLOIEMENT</span>
+            <h2 id="souverainete-title">L’institution garde la maîtrise de ses documents, de ses preuves et de ses décisions.</h2>
+            <p>Dans le scénario on-premise cible, ATHAR est conçu pour fonctionner dans l’environnement institutionnel autorisé. Les documents, preuves, décisions et livrables restent dans le périmètre défini par l’institution. Les accès, le chiffrement, la journalisation et l’homologation se cadrent avec la DSI.</p>
+          </div>
+          <div className={styles.boundaryCard} aria-label="Principe de déploiement institutionnel">
+            <div className={styles.boundaryHeader}><span className={styles.boundaryTag}><Server size={14} aria-hidden="true" /> TRAJECTOIRE CIBLE</span><span>ENVIRONNEMENT AUTORISÉ</span></div>
+            <div className={styles.boundaryFlow}>
+              <div><FileText size={17} aria-hidden="true" /><strong>Documents</strong><small>Sources sensibles</small></div>
+              <span className={styles.boundaryArrow}>→</span>
+              <div><ShieldCheck size={17} aria-hidden="true" /><strong>ATHAR</strong><small>Contrôle local</small></div>
+              <span className={styles.boundaryArrow}>→</span>
+              <div><UserCheck size={17} aria-hidden="true" /><strong>Décision</strong><small>Validation humaine</small></div>
+            </div>
+            <div className={styles.boundaryFooter}><LockKeyhole size={14} aria-hidden="true" /> Périmètre et modalités à définir avec la DSI</div>
+          </div>
+        </div>
+      </section>
+
+      <section className={`${styles.section} ${styles.useCasesSection}`} aria-labelledby="cas-title">
+        <div className={styles.sectionIntro}>
+          <div><span className={styles.eyebrow}>CAS D’USAGE</span><h2 id="cas-title">Un même principe pour des dossiers publics qui exigent des faits et des sources.</h2></div>
+          <p>La commande publique est le premier terrain démontré. Les extensions dépendent des règles, des sources et des livrables cadrés avec chaque institution.</p>
+        </div>
+        <div className={styles.useCasesGrid}>
+          <article className={`${styles.useCaseCard} ${styles.useCaseActive}`}>
+            <div className={styles.useCaseTop}><span className={styles.useCaseStatus}>DÉMONTRÉ AUJOURD’HUI</span><Scale size={19} aria-hidden="true" /></div>
+            <h3>Commande publique</h3>
+            <p>Examiner la mise en concurrence, l’évaluation des offres et l’attribution.</p>
+            <div className={styles.useCaseTags}><span>Contrôles déterministes</span><span>Données fictives</span></div>
+          </article>
+          <article className={styles.useCaseCard}>
+            <div className={styles.useCaseTop}><span className={styles.useCaseStatusMuted}>À CADRER</span><FileSearch2 size={19} aria-hidden="true" /></div>
+            <h3>Contrôles documentaires</h3>
+            <p>Un périmètre à définir à partir des règles et sources de l’institution.</p>
+            <div className={styles.useCaseTags}><span>Socle réutilisable</span></div>
+          </article>
+          <article className={styles.useCaseCard}>
+            <div className={styles.useCaseTop}><span className={styles.useCaseStatusMuted}>À CADRER</span><FileCheck2 size={19} aria-hidden="true" /></div>
+            <h3>Revues administratives</h3>
+            <p>Des dossiers où la décision doit rester reliée aux faits et aux pièces.</p>
+            <div className={styles.useCaseTags}><span>Après validation du besoin</span></div>
+          </article>
+        </div>
+      </section>
+
+      <section className={`${styles.section} ${styles.whySection}`} aria-labelledby="why-title">
+        <div className={styles.sectionIntro}>
+          <div><span className={styles.eyebrow}>POURQUOI ATHAR</span><h2 id="why-title">La vitesse compte. La défendabilité aussi.</h2></div>
+          <p>ATHAR rassemble les exigences essentielles d’un environnement de contrôle professionnel, sans confier la décision à une boîte noire.</p>
+        </div>
+        <div className={styles.principlesGrid}>
+          <article><span className={styles.principleIcon}><FileSearch2 size={18} aria-hidden="true" /></span><h3>Preuve avant conclusion</h3><p>Le passage source reste accessible au moment d’examiner le signal.</p></article>
+          <article><span className={styles.principleIcon}><Scale size={18} aria-hidden="true" /></span><h3>Contrôles explicites</h3><p>Le contrôleur voit la règle, l’attendu et l’observé.</p></article>
+          <article><span className={styles.principleIcon}><UserCheck size={18} aria-hidden="true" /></span><h3>Responsabilité humaine</h3><p>Le système prépare et documente ; la personne habilitée décide.</p></article>
+          <article><span className={styles.principleIcon}><LockKeyhole size={18} aria-hidden="true" /></span><h3>Déploiement maîtrisé</h3><p>La trajectoire s’adapte à l’environnement autorisé par l’institution.</p></article>
+        </div>
+      </section>
+
+      <section className={styles.finalCta} aria-labelledby="final-title">
+        <div className={styles.finalCtaInner}>
+          <div><span className={styles.eyebrowDark}>DÉMONSTRATEUR FONCTIONNEL</span><h2 id="final-title">Examinez un dossier. Suivez la preuve. Décidez en connaissance de cause.</h2><p>Le démonstrateur présente un dossier fictif et le parcours complet : point à vérifier, règle, preuve, décision humaine et fiche de constat provisoire.</p></div>
+          <div className={styles.finalCtaAction}><Link href="/v3" className={styles.lightButton}>Ouvrir le démonstrateur <ArrowRight size={16} aria-hidden="true" /></Link><span><CheckCircle2 size={14} aria-hidden="true" /> Données fictives · validation humaine requise</span></div>
+        </div>
       </section>
 
       <footer className={styles.footer}>
-        <span>ATHAR · GovTech public procurement control</span>
-        <span>Prototype de démonstration · décision humaine requise</span>
+        <div className={styles.footerInner}>
+          <Link href="/" className={styles.footerBrand}><span className={styles.footerMark}><ShieldCheck size={15} aria-hidden="true" /></span><span><strong>ATHAR</strong><small>Chaque alerte mène à sa preuve.</small></span></Link>
+          <nav className={styles.footerNav} aria-label="Navigation secondaire"><a href="#approche">Approche</a><a href="#preuve">Preuve</a><a href="#souverainete">Souveraineté</a><Link href="/v3">Démonstrateur</Link></nav>
+          <p>Solution GovTech pour les environnements de contrôle public.<br /><span>Démonstrateur fonctionnel · données présentées fictives.</span></p>
+        </div>
       </footer>
     </main>
   );
+}
+
+function LayersIcon() {
+  return <span className={styles.layersIcon} aria-hidden="true"><span /><span /><span /></span>;
 }
