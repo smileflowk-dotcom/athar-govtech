@@ -55,7 +55,7 @@
 .trustRow svg { color: var(--landing-teal); }
 
 .heroVisual { min-width: 0; }
-.productWindow { background: #e7eeeb; border: 1px solid #d1ded9; border-radius: 11px; box-shadow: 0 24px 65px rgba(18, 60, 53, .13); container: product-window / inline-size; max-width: 100%; overflow: hidden; }
+.productWindow { background: #e7eeeb; border: 1px solid #d1ded9; border-radius: 11px; box-shadow: 0 24px 65px rgba(18, 60, 53, .13); max-width: 100%; overflow: hidden; }
 .windowBar { align-items: center; background: #fff; border-bottom: 1px solid #dbe4e1; display: flex; justify-content: space-between; min-height: 48px; padding: 0 14px; }
 .windowTitle { align-items: center; display: flex; gap: 8px; min-width: 0; }
 .windowTitle strong { font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -93,10 +93,6 @@
 .decisionBar { align-items: center; background: var(--landing-deep); border-radius: 5px; color: #fff; display: flex; font-size: 9px; font-weight: 800; gap: 6px; justify-content: center; margin-top: 15px; padding: 9px 6px; }
 .visualCaption { align-items: baseline; color: #7a8989; display: flex; flex-wrap: wrap; font-size: 10px; gap: 4px 7px; margin: 12px 2px 0; }
 .visualCaption span { color: var(--landing-teal); font-size: 9px; font-weight: 850; letter-spacing: .08em; }
-
-@container product-window (max-width: 600px) {
-  .productGrid { grid-template-columns: minmax(0, 1fr); }
-}
 
 .signature { background: #fff; border-bottom: 1px solid var(--landing-line); border-top: 1px solid var(--landing-line); }
 .signatureInner { align-items: center; display: grid; gap: 25px; grid-template-columns: 40px minmax(220px, .75fr) 1fr; margin: 0 auto; max-width: 1240px; padding: 28px 30px; }
