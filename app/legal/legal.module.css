@@ -1,0 +1,218 @@
+:global(body):has(.legalPage) { min-width: 0; }
+
+.legalPage {
+  background: var(--canvas);
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.skipLink {
+  background: var(--navy);
+  color: #fff;
+  left: 16px;
+  padding: 9px 12px;
+  position: fixed;
+  top: -60px;
+  z-index: 10;
+}
+
+.skipLink:focus { top: 12px; }
+
+.legalHeader {
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  margin: 0 auto;
+  max-width: 1240px;
+  padding: 20px 30px;
+  width: 100%;
+}
+
+.legalBrand, .legalFooterBrand {
+  align-items: center;
+  display: inline-flex;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.legalMark, .legalFooterMark {
+  align-items: center;
+  background: var(--teal-dark);
+  border-radius: 7px;
+  color: #fff;
+  display: inline-flex;
+  justify-content: center;
+}
+
+.legalMark { height: 34px; width: 34px; }
+.legalBrandText, .legalFooterBrand > span:last-child { display: block; }
+.legalBrandText strong, .legalFooterBrand strong { display: block; letter-spacing: .12em; }
+.legalBrandText strong { font-size: 14px; }
+.legalBrandText small, .legalFooterBrand small { color: var(--faint); display: block; font-size: 9px; margin-top: 3px; }
+
+.backLink {
+  align-items: center;
+  color: var(--teal-dark);
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 700;
+  gap: 6px;
+  text-decoration: none;
+}
+
+.backLink:hover, .legalFooterNav a:hover { text-decoration: underline; }
+
+.legalContent {
+  flex: 1;
+  margin: 0 auto;
+  max-width: 860px;
+  padding: clamp(58px, 8vw, 96px) 30px 88px;
+  width: 100%;
+}
+
+.legalEyebrow {
+  color: var(--teal-dark);
+  display: block;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+
+.legalContent h1 {
+  font-size: clamp(2.35rem, 6vw, 4rem);
+  letter-spacing: -.055em;
+  line-height: 1.04;
+  margin: 14px 0 20px;
+  max-width: 720px;
+  text-wrap: balance;
+}
+
+.legalLead {
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.7;
+  margin: 0;
+  max-width: 680px;
+  text-wrap: pretty;
+}
+
+.legalSections {
+  border-top: 1px solid var(--line);
+  margin-top: 48px;
+}
+
+.legalSection {
+  border-bottom: 1px solid var(--line);
+  padding: 27px 0 29px;
+}
+
+.legalSection h2 {
+  font-size: 20px;
+  letter-spacing: -.025em;
+  line-height: 1.2;
+  margin: 0 0 13px;
+}
+
+.legalSectionBody {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.legalSectionBody p { margin: 0 0 11px; }
+.legalSectionBody p:last-child { margin-bottom: 0; }
+
+.legalList {
+  margin: 8px 0 0;
+  padding-left: 20px;
+}
+
+.legalList li { margin: 5px 0; }
+
+.legalNotice {
+  background: var(--teal-soft);
+  border-left: 3px solid var(--teal);
+  color: var(--ink);
+  padding: 11px 14px;
+}
+
+.legalFooter {
+  background: var(--navy);
+  color: #eaf3ef;
+}
+
+.legalFooterInner {
+  align-items: center;
+  display: flex;
+  gap: 30px;
+  justify-content: space-between;
+  margin: 0 auto;
+  max-width: 1240px;
+  padding: 24px 30px 28px;
+  width: 100%;
+}
+
+.legalFooterMark { background: var(--teal); height: 28px; width: 28px; }
+.legalFooterBrand strong { font-size: 12px; }
+.legalFooterBrand small { color: #a8bdba; }
+
+.legalFooterNav {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 16px;
+  justify-content: flex-end;
+}
+
+.legalFooterNav a {
+  color: #c2d1ce;
+  font-size: 10px;
+  text-decoration: none;
+}
+
+.legalBrand:focus-visible, .backLink:focus-visible, .legalFooterBrand:focus-visible, .legalFooterNav a:focus-visible, .skipLink:focus-visible {
+  outline: 3px solid rgba(20, 124, 120, .28);
+  outline-offset: 3px;
+}
+
+@media (max-width: 600px) {
+  .legalHeader {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 14px;
+    padding: 16px 17px;
+  }
+
+  .legalContent { padding: 48px 17px 62px; }
+  .legalContent h1 { font-size: clamp(2.25rem, 11vw, 3rem); }
+  .legalLead { font-size: 15px; line-height: 1.65; }
+  .legalSections { margin-top: 38px; }
+  .legalSection { padding: 23px 0 25px; }
+  .legalSection h2 { font-size: 18px; }
+  .legalSectionBody { font-size: 13px; line-height: 1.65; }
+
+  .legalFooterInner {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 19px;
+    padding: 27px 17px 30px;
+  }
+
+  .legalFooterNav {
+    display: grid;
+    gap: 0 14px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-content: initial;
+    width: 100%;
+  }
+
+  .legalFooterNav a {
+    align-items: center;
+    display: inline-flex;
+    min-height: 44px;
+  }
+}

@@ -5,7 +5,7 @@ import "./audit-improvements.css";
 
 export const metadata: Metadata = {
   title: "ATHAR — Chaque alerte mène à sa preuve",
-  description: "Poste de contrôle explicable des marchés publics : dossier, preuve multisource et décision humaine.",
+  description: "Solution GovTech pour des contrôles publics plus crédibles, traçables et validés par l’humain.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

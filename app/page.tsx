@@ -1,395 +1,316 @@
-"use client";
-
+import Link from "next/link";
 import {
-  AlertTriangle,
   ArrowRight,
-  Check,
+  BookOpen,
   CheckCircle2,
-  ChevronRight,
-  CircleX,
-  Clock3,
   FileCheck2,
   FileSearch2,
   FileText,
-  FolderOpen,
-  Loader2,
-  MessageSquareText,
-  Search,
+  LockKeyhole,
+  Scale,
+  Server,
   ShieldCheck,
-  Upload,
-  X,
+  UserCheck,
 } from "lucide-react";
-import { type ChangeEvent, useEffect, useMemo, useState } from "react";
-import {
-  demoDossiers,
-  type AlertStatus,
-  type Dossier,
-  type EvidenceItem,
-  type EvidenceState,
-  type ProcurementAlert,
-} from "../lib/data/demoDossiers";
-import {
-  buildImportedDossier,
-  mergeImportedDossiers,
-  type ExtractedPdf,
-} from "../lib/data/importedDossier";
-import { buildStructuredDossier } from "../lib/data/importedStructuredSource";
+import styles from "./landing.module.css";
 
-const statusLabels: Record<AlertStatus, string> = {
-  pending: "À examiner",
-  confirmed: "Constat confirmé",
-  dismissed: "Alerte écartée",
-  requested: "Complément demandé",
+type ProductWorkspaceProps = {
+  compact?: boolean;
 };
 
-const evidenceStateLabels: Record<EvidenceState, string> = {
-  retrieved: "Preuve retrouvée",
-  contradictory: "Informations contradictoires",
-  insufficient: "Preuve insuffisante",
-};
+function ProductWorkspace({ compact = false }: ProductWorkspaceProps) {
+  return (
+    <div
+      className={`${styles.productWindow} ${compact ? styles.productWindowCompact : ""}`}
+      aria-label="Aperçu de l’espace ATHAR"
+    >
+      <div className={styles.windowBar}>
+        <div className={styles.windowTitle}>
+          <span className={styles.windowLogo}><ShieldCheck size={14} aria-hidden="true" /></span>
+          <strong>ATHAR — Dossier actif</strong>
+        </div>
+        <span className={styles.windowStatus}><span /> Démonstrateur</span>
+      </div>
 
-type PersistedUiState = {
-  dossiers: Dossier[];
-  activeDossierId?: string | null;
-  activeAlertId?: string | null;
-};
+      <div className={styles.productGrid}>
+        <aside className={styles.productRail}>
+          <span className={styles.productLabel}>PIÈCES DU DOSSIER</span>
+          <div className={`${styles.productItem} ${styles.productItemActive}`}>
+            <FileText size={13} aria-hidden="true" />
+            <span><strong>CPS — page 6</strong><small>Clause technique</small></span>
+          </div>
+          <div className={styles.productItem}>
+            <FileText size={13} aria-hidden="true" />
+            <span><strong>Grille — page 17</strong><small>Notation des offres</small></span>
+          </div>
+          <div className={styles.productItem}>
+            <FileText size={13} aria-hidden="true" />
+            <span><strong>PV — page 18</strong><small>Attribution</small></span>
+          </div>
+          <span className={`${styles.productLabel} ${styles.productLabelSpaced}`}>POINTS À VÉRIFIER</span>
+          <div className={styles.productIssue}>
+            <span className={styles.issueMarker} />
+            <span><strong>CTRL-ACC-01</strong><small>Clause potentiellement restrictive</small></span>
+          </div>
+        </aside>
 
-function fallbackEvidence(alert: ProcurementAlert): EvidenceItem[] {
-  return [{
-    id: `${alert.id}-source`,
-    source: alert.evidence.split(" — ")[0] || "Pièce source",
-    location: alert.evidence,
-    excerpt: alert.highlight,
-    role: "observé",
-    state: alert.evidenceState ?? "retrieved",
-  }];
-}
+        <section className={styles.productDocument} aria-label="Passage source">
+          <div className={styles.documentTopline}><span>PIÈCE SOURCE</span><strong>CPS — page 6</strong></div>
+          <div className={styles.paperSheet}>
+            <span className={styles.paperKicker}>CAHIER DES PRESCRIPTIONS SPÉCIALES</span>
+            <span className={styles.paperLine} />
+            <span className={styles.paperLine} />
+            <span className={`${styles.paperLine} ${styles.paperLineShort}`} />
+            <p className={styles.paperHighlight}>« Le soumissionnaire doit être partenaire certifié agréé… »</p>
+            <span className={styles.paperLine} />
+            <span className={`${styles.paperLine} ${styles.paperLineShort}`} />
+            <span className={styles.paperLine} />
+            <span className={styles.sourceAnchor}><FileSearch2 size={12} aria-hidden="true" /> Passage source relié</span>
+          </div>
+        </section>
 
-function isStructuredEvidence(item?: EvidenceItem) {
-  return item?.location.toLowerCase().includes("enregistrement structuré") ?? false;
-}
-
-function alertUsesStructuredEvidence(alert: ProcurementAlert) {
-  return (alert.evidenceItems ?? fallbackEvidence(alert)).some(isStructuredEvidence);
-}
-
-function formatDecisionDate(value?: string) {
-  if (!value) return "Aucune décision enregistrée";
-  return new Intl.DateTimeFormat("fr-FR", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
+        <aside className={styles.productControl}>
+          <span className={styles.productLabel}>POINT À VÉRIFIER</span>
+          <h3>Clause technique</h3>
+          <div className={styles.controlFact}><span>RÈGLE</span><p>Examiner les exigences susceptibles de limiter la concurrence.</p></div>
+          <div className={styles.controlFact}><span>ATTENDU</span><p>Spécifications proportionnées et ouvertes.</p></div>
+          <div className={styles.controlFact}><span>OBSERVÉ</span><p>Exigence de certification nominative.</p></div>
+          <div className={styles.decisionBar}><UserCheck size={13} aria-hidden="true" /> Décision du contrôleur</div>
+        </aside>
+      </div>
+    </div>
+  );
 }
 
 export default function Home() {
-  const [dossiers, setDossiers] = useState(demoDossiers);
-  const [activeDossierId, setActiveDossierId] = useState(demoDossiers[0].id);
-  const [activeAlertId, setActiveAlertId] = useState<string | null>(demoDossiers[0].alerts[0]?.id ?? null);
-  const [selectedEvidenceId, setSelectedEvidenceId] = useState<string | null>(null);
-  const [decisionNote, setDecisionNote] = useState("");
-  const [decisionMessage, setDecisionMessage] = useState("");
-  const [query, setQuery] = useState("");
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const [sourceImporting, setSourceImporting] = useState(false);
-  const [sourceError, setSourceError] = useState("");
-  const [persistenceReady, setPersistenceReady] = useState(false);
-
-  const activeDossier = dossiers.find((dossier) => dossier.id === activeDossierId) ?? dossiers[0];
-  const activeAlert = activeDossier.alerts.find((alert) => alert.id === activeAlertId) ?? activeDossier.alerts[0];
-  const confirmedAlerts = activeDossier.alerts.filter((alert) => alert.status === "confirmed");
-  const evidenceItems = useMemo(
-    () => (activeAlert ? activeAlert.evidenceItems ?? fallbackEvidence(activeAlert) : []),
-    [activeAlert],
-  );
-  const selectedEvidence = evidenceItems.find((item) => item.id === selectedEvidenceId) ?? evidenceItems[0];
-  const selectedEvidenceIsStructured = isStructuredEvidence(selectedEvidence);
-  const displayedPage = activeAlert?.page ?? activeDossier.activePage;
-  const selectedEvidencePage = Number(selectedEvidence?.location.match(/page\s+(\d+)/i)?.[1]) || displayedPage;
-  const canDecide = decisionNote.trim().length >= 8;
-  const filteredDossiers = useMemo(
-    () => dossiers.filter((dossier) => dossier.title.toLowerCase().includes(query.toLowerCase())),
-    [dossiers, query],
-  );
-
-  useEffect(() => {
-    let cancelled = false;
-    async function hydrateLocalState() {
-      try {
-        const response = await fetch("/api/state", { cache: "no-store" });
-        if (!response.ok) return;
-        const payload = (await response.json()) as { state?: PersistedUiState | null };
-        const state = payload.state;
-        if (!state || !Array.isArray(state.dossiers) || state.dossiers.length === 0 || cancelled) return;
-        setDossiers(state.dossiers);
-        const selectedDossier = state.dossiers.find((dossier) => dossier.id === state.activeDossierId) ?? state.dossiers[0];
-        setActiveDossierId(selectedDossier.id);
-        const selectedAlert = selectedDossier.alerts.find((alert) => alert.id === state.activeAlertId);
-        setActiveAlertId(selectedAlert?.id ?? selectedDossier.alerts[0]?.id ?? null);
-      } catch {
-        // L’interface reste utilisable avec les données fictives en mémoire.
-      } finally {
-        if (!cancelled) setPersistenceReady(true);
-      }
-    }
-    void hydrateLocalState();
-    return () => { cancelled = true; };
-  }, []);
-
-  useEffect(() => {
-    if (!persistenceReady) return;
-    const timeout = window.setTimeout(() => {
-      void fetch("/api/state", {
-        method: "PUT",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ dossiers, activeDossierId, activeAlertId }),
-      }).catch(() => {
-        // La persistance locale ne bloque jamais le démonstrateur.
-      });
-    }, 250);
-    return () => window.clearTimeout(timeout);
-  }, [dossiers, activeDossierId, activeAlertId, persistenceReady]);
-
-  useEffect(() => {
-    setSelectedEvidenceId(activeAlert?.evidenceItems?.[0]?.id ?? null);
-    setDecisionNote(activeAlert?.decisionNote ?? "");
-    setDecisionMessage("");
-  }, [activeAlert?.id]);
-
-  function selectDossier(dossier: Dossier) {
-    setActiveDossierId(dossier.id);
-    setActiveAlertId(dossier.alerts[0]?.id ?? null);
-  }
-
-  function updateAlertStatus(status: AlertStatus) {
-    if (!activeAlert || !canDecide) return;
-    const decisionAt = new Date().toISOString();
-    setDossiers((current) => current.map((dossier) =>
-      dossier.id !== activeDossier.id ? dossier : {
-        ...dossier,
-        alerts: dossier.alerts.map((alert) => alert.id === activeAlert.id ? {
-          ...alert,
-          status,
-          decisionNote: decisionNote.trim(),
-          decisionAt,
-        } : alert),
-      },
-    ));
-    setDecisionMessage(`${statusLabels[status]} · décision enregistrée et traçable.`);
-  }
-
-  async function handleSourceUpload(event: ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(event.target.files ?? []);
-    event.target.value = "";
-    if (!files.length) return;
-
-    setSourceError("");
-    setSourceImporting(true);
-
-    try {
-      const importedSources: Dossier[] = [];
-
-      for (const file of files) {
-        if (file.type === "application/pdf" || /\.pdf$/i.test(file.name)) {
-          const formData = new FormData();
-          formData.append("file", file);
-          const response = await fetch("/api/pdf/extract", { method: "POST", body: formData });
-          const payload = (await response.json()) as ExtractedPdf & { error?: string };
-          if (!response.ok) throw new Error(payload.error ?? `Impossible de lire ${file.name}.`);
-          importedSources.push(buildImportedDossier(payload));
-          continue;
-        }
-
-        if (/\.(json|csv)$/i.test(file.name)) {
-          importedSources.push(buildStructuredDossier(file.name, await file.text()));
-          continue;
-        }
-
-        throw new Error(`Format non pris en charge : ${file.name}. Utilisez PDF, JSON ou CSV.`);
-      }
-
-      const importedDossier = mergeImportedDossiers(importedSources);
-      setDossiers((current) => [importedDossier, ...current]);
-      setActiveDossierId(importedDossier.id);
-      setActiveAlertId(importedDossier.alerts[0]?.id ?? null);
-    } catch (error) {
-      setSourceError(error instanceof Error ? error.message : "ATHAR n’a pas pu traiter les sources sélectionnées.");
-    } finally {
-      setSourceImporting(false);
-    }
-  }
-
   return (
-    <main className="app-shell">
-      <header className="topbar">
-        <div className="brand-block">
-          <div className="brand-mark" aria-hidden="true"><ShieldCheck size={21} /></div>
-          <div><strong>ATHAR</strong><span>Contrôle · preuve · décision</span></div>
-        </div>
-        <div className="dossier-context" aria-label="Contexte du dossier actif">
-          <div><span className="eyebrow">DOSSIER ACTIF</span><strong>{activeDossier.title}</strong></div>
-          <span>{activeDossier.buyer ?? "Acheteur non renseigné"}</span>
-          <span>{activeDossier.procedure ?? "Procédure à identifier"}</span>
-          <span>{activeDossier.documentCount ?? 1} source{(activeDossier.documentCount ?? 1) > 1 ? "s" : ""}</span>
-        </div>
-        <div className="top-actions">
-          <label className="secondary-button upload-button" title="PDF texte, JSON ou CSV · plusieurs sources peuvent être regroupées dans un même dossier · traitement local">
-            {sourceImporting ? <Loader2 className="spin" size={16} /> : <Upload size={16} />}
-            {sourceImporting ? "Traitement…" : "Ajouter des sources"}
-            <input
-              type="file"
-              accept="application/pdf,.pdf,application/json,.json,text/csv,.csv"
-              multiple
-              onChange={handleSourceUpload}
-              disabled={sourceImporting}
-              hidden
-            />
-          </label>
-          <button className="primary-button" onClick={() => setPreviewOpen(true)}><FileCheck2 size={16} /> Fiche de constat</button>
+    <main className={styles.page} id="contenu">
+      <a className={styles.skipLink} href="#contenu">Aller au contenu</a>
+
+      <header className={styles.header}>
+        <div className={styles.headerInner}>
+          <Link href="/" className={styles.brand} aria-label="Accueil ATHAR">
+            <span className={styles.brandMark}><ShieldCheck size={19} aria-hidden="true" /></span>
+            <span className={styles.brandText}><strong>ATHAR</strong><small>Chaque alerte mène à sa preuve</small></span>
+          </Link>
+          <nav className={styles.nav} aria-label="Navigation principale">
+            <a href="#enjeu">Enjeu</a>
+            <a href="#approche">Approche</a>
+            <a href="#workspace">Espace produit</a>
+            <a href="#preuve">Preuves</a>
+            <a href="#souverainete">Souveraineté</a>
+            <Link href="/v3" className={styles.navDemo}>Ouvrir le démonstrateur <ArrowRight size={14} aria-hidden="true" /></Link>
+          </nav>
         </div>
       </header>
 
-      {sourceError && <div className="error-banner" role="alert">{sourceError}</div>}
-
-      <section className="workspace" aria-label="Poste de contrôle ATHAR">
-        <aside className="panel case-panel">
-          <div className="panel-heading">
-            <div><span className="step-number">01</span><div><span className="eyebrow">DOSSIER</span><h2>Éléments à examiner</h2></div></div>
-            <span className="count-badge">{activeDossier.alerts.length}</span>
+      <section className={styles.hero} aria-labelledby="hero-title">
+        <div className={styles.heroCopy}>
+          <span className={styles.eyebrow}>CONTRÔLE PUBLIC SOUVERAIN</span>
+          <h1 id="hero-title">Des contrôles publics souverains, traçables et validés par l’humain</h1>
+          <p className={styles.heroLead}>ATHAR aide les institutions publiques à examiner des dossiers complexes, retrouver les preuves utiles et documenter chaque contrôle de manière traçable et souveraine.</p>
+          <div className={styles.heroActions}>
+            <Link href="/v3" className={styles.primaryButton}>Ouvrir le démonstrateur <ArrowRight size={16} aria-hidden="true" /></Link>
+            <a href="#approche" className={styles.secondaryButton}>Voir le parcours</a>
           </div>
-          <label className="search-box"><Search size={15} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Changer de dossier…" /></label>
-          <div className="dossier-strip" aria-label="Dossiers disponibles">
-            {filteredDossiers.map((dossier) => (
-              <button key={dossier.id} className={`dossier-row ${dossier.id === activeDossier.id ? "selected" : ""}`} onClick={() => selectDossier(dossier)}>
-                <FolderOpen size={15} />
-                <span><strong>{dossier.title}</strong><small>{dossier.alerts.length} élément{dossier.alerts.length > 1 ? "s" : ""}</small></span>
-                <ChevronRight size={14} />
-              </button>
-            ))}
+          <div className={styles.trustRow} aria-label="Principes ATHAR">
+            <span><CheckCircle2 size={14} aria-hidden="true" /> Preuves reliées aux sources</span>
+            <span><CheckCircle2 size={14} aria-hidden="true" /> Contrôles explicites</span>
+            <span><CheckCircle2 size={14} aria-hidden="true" /> Décision humaine</span>
           </div>
-          <div className="queue-heading"><span>File du dossier</span><small>Priorité · preuve · action</small></div>
-          <div className="alert-list">
-            {activeDossier.alerts.map((alert, index) => (
-              <button key={alert.id} className={`alert-row ${alert.id === activeAlert?.id ? "selected" : ""}`} onClick={() => setActiveAlertId(alert.id)}>
-                <span className={`severity-marker severity-${alert.level.toLowerCase()}`} />
-                <span className="alert-index">{String(index + 1).padStart(2, "0")}</span>
-                <span className="alert-copy">
-                  <strong>{alert.type}</strong>
-                  <small>{alert.controlId ?? "CTRL-V0"} · {alertUsesStructuredEvidence(alert) ? "donnée structurée" : `page ${alert.page}`}</small>
-                  <span className={`evidence-state state-${alert.evidenceState ?? "retrieved"}`}>{evidenceStateLabels[alert.evidenceState ?? "retrieved"]}</span>
-                </span>
-                <span className={`status-dot status-${alert.status}`} title={statusLabels[alert.status]} />
-              </button>
-            ))}
-            {!activeDossier.alerts.length && <div className="empty-queue"><ShieldCheck size={28} /><strong>Aucun élément à examiner</strong><span>Aucun signal suffisant n’a été détecté.</span></div>}
-          </div>
-          <div className="local-note"><ShieldCheck size={14} /> Traitement local · données fictives par défaut</div>
-        </aside>
-
-        <section className="panel evidence-panel">
-          <div className="panel-heading">
-            <div><span className="step-number">02</span><div><span className="eyebrow">PREUVE MULTISOURCE</span><h2>{activeAlert ? "Comprendre l’écart" : "Aucune alerte sélectionnée"}</h2></div></div>
-            {activeAlert && <span className={`evidence-summary state-${activeAlert.evidenceState ?? "retrieved"}`}>{evidenceStateLabels[activeAlert.evidenceState ?? "retrieved"]}</span>}
-          </div>
-          {activeAlert ? (
-            <div className="evidence-scroll">
-              <section className="control-card">
-                <div className="control-title">
-                  <div><span>{activeAlert.controlId ?? "CTRL-V0"} · version {activeAlert.controlVersion ?? "1.0"}</span><h1>{activeAlert.type}</h1></div>
-                  <span className={`level level-${activeAlert.level.toLowerCase()}`}>{activeAlert.level}</span>
-                </div>
-                <div className="rule-line"><ShieldCheck size={15} /><span><strong>Règle appliquée</strong>{activeAlert.rule}</span></div>
-              </section>
-              <section className="comparison-grid" aria-label="Comparaison attendu et observé">
-                <article><span className="fact-label">ATTENDU</span><p>{activeAlert.expected}</p></article>
-                <div className="comparison-arrow"><ArrowRight size={18} /></div>
-                <article className="observed"><span className="fact-label">OBSERVÉ</span><p>{activeAlert.observed}</p></article>
-              </section>
-              {(activeAlert.gap || activeAlert.impact) && (
-                <section className="impact-row">
-                  {activeAlert.gap && <div><span>ÉCART</span><strong>{activeAlert.gap}</strong></div>}
-                  <p><strong>Impact à examiner</strong>{activeAlert.impact ?? activeAlert.action}</p>
-                </section>
-              )}
-              <section className="sources-section">
-                <div className="section-title"><div><FileSearch2 size={17} /><strong>Sources rapprochées</strong></div><span>{evidenceItems.length} source{evidenceItems.length > 1 ? "s" : ""}</span></div>
-                <div className="source-tabs" role="tablist" aria-label="Sources de preuve">
-                  {evidenceItems.map((item) => (
-                    <button key={item.id} role="tab" aria-selected={item.id === selectedEvidence?.id} className={item.id === selectedEvidence?.id ? "active" : ""} onClick={() => setSelectedEvidenceId(item.id)}>
-                      <FileText size={15} /><span><strong>{item.source}</strong><small>{item.location}</small></span><span className={`source-state state-${item.state}`}>{item.role}</span>
-                    </button>
-                  ))}
-                </div>
-              </section>
-              {selectedEvidence && (
-                <section className="document-viewer" aria-label="Passage source exact">
-                  <header><div><span className="eyebrow">PASSAGE SOURCE EXACT</span><strong>{selectedEvidence.source}</strong></div><span>{selectedEvidence.location}</span></header>
-                  <article>
-                    <span className="document-kicker">
-                      {selectedEvidenceIsStructured
-                        ? "Donnée structurée importée localement"
-                        : activeDossier.realDocument
-                          ? "Document importé et extrait localement"
-                          : "Document de démonstration — données fictives"}
-                    </span>
-                    {!selectedEvidenceIsStructured && (
-                      <p>{(activeDossier.documentCount ?? 1) > 1 ? `Page ${selectedEvidencePage}` : `Page ${selectedEvidencePage} / ${activeDossier.totalPages}`}</p>
-                    )}
-                    <mark>{selectedEvidence.excerpt}</mark>
-                    <div className="source-anchor"><CheckCircle2 size={15} /> Passage rattaché au contrôle {activeAlert.controlId ?? "CTRL-V0"}</div>
-                  </article>
-                </section>
-              )}
-            </div>
-          ) : <div className="empty-evidence"><ShieldCheck size={36} /><strong>Aucune preuve à examiner</strong><span>Sélectionnez un dossier comportant un signal.</span></div>}
-        </section>
-
-        <aside className="panel decision-panel">
-          <div className="panel-heading"><div><span className="step-number">03</span><div><span className="eyebrow">VALIDATION HUMAINE</span><h2>Décider</h2></div></div></div>
-          {activeAlert ? (
-            <div className="decision-content">
-              <div className={`current-status status-card-${activeAlert.status}`}><span>STATUT</span><strong>{statusLabels[activeAlert.status]}</strong><small>{formatDecisionDate(activeAlert.decisionAt)}</small></div>
-              <section className="decision-brief">
-                <span className="eyebrow">CE QUE LA PREUVE PERMET DE DIRE</span>
-                <p>{activeAlert.impact ?? activeAlert.observed}</p>
-                <div><AlertTriangle size={15} /> Aucune conclusion juridique ou accusation automatique.</div>
-              </section>
-              <label className="decision-note">
-                <span>Justification du contrôleur <strong>requise</strong></span>
-                <textarea value={decisionNote} onChange={(event) => { setDecisionNote(event.target.value); setDecisionMessage(""); }} placeholder="Expliquer brièvement la décision à partir des preuves affichées…" rows={5} />
-                <small>{canDecide ? "Justification prête à être enregistrée." : "8 caractères minimum pour assurer la traçabilité."}</small>
-              </label>
-              <div className="decision-actions">
-                <button className="primary-button confirm" disabled={!canDecide} onClick={() => updateAlertStatus("confirmed")}><Check size={17} /> Confirmer le constat</button>
-                <button className="secondary-button request" disabled={!canDecide} onClick={() => updateAlertStatus("requested")}><MessageSquareText size={17} /> Demander une pièce</button>
-                <button className="secondary-button dismiss" disabled={!canDecide} onClick={() => updateAlertStatus("dismissed")}><CircleX size={17} /> Écarter l’alerte</button>
-              </div>
-              <p className="decision-message" role="status">{decisionMessage}</p>
-              <section className="trace-card">
-                <div><Clock3 size={15} /><strong>Traçabilité</strong></div>
-                <ul><li>Contrôle déterministe {activeAlert.controlId ?? "CTRL-V0"}</li><li>{evidenceItems.length} source{evidenceItems.length > 1 ? "s rapprochées" : " rattachée"}</li><li>Décision et justification conservées localement</li></ul>
-              </section>
-              <button className="report-button" onClick={() => setPreviewOpen(true)} disabled={!confirmedAlerts.length}><FileCheck2 size={17} /> Générer la fiche de constat<span>{confirmedAlerts.length}</span></button>
-            </div>
-          ) : <div className="empty-decision"><FileCheck2 size={32} /><strong>Aucune décision attendue</strong><span>Le dossier actif ne contient aucune alerte.</span></div>}
-        </aside>
+        </div>
+        <div className={styles.heroVisual}>
+          <ProductWorkspace />
+          <p className={styles.visualCaption}><span>ESPACE PRODUIT</span> Un espace de contrôle centré sur le dossier</p>
+        </div>
       </section>
 
-      {previewOpen && (
-        <div className="modal-backdrop" role="presentation" onMouseDown={() => setPreviewOpen(false)}>
-          <section className="modal" role="dialog" aria-modal="true" aria-labelledby="report-title" onMouseDown={(event) => event.stopPropagation()}>
-            <div className="modal-header"><div><span>Fiche de constat provisoire</span><h2 id="report-title">{activeDossier.title}</h2></div><button className="icon-button" onClick={() => setPreviewOpen(false)} aria-label="Fermer"><X size={18} /></button></div>
-            <div className="report-body">
-              <p className="report-warning">Validation humaine requise — document de travail non validé institutionnellement.</p>
-              {confirmedAlerts.length ? confirmedAlerts.map((alert, index) => (
-                <article key={alert.id} className="report-finding">
-                  <span>Constat {index + 1} · {alert.controlId ?? "CTRL-V0"}</span><h3>{alert.type}</h3>
-                  <dl><dt>Règle</dt><dd>{alert.rule}</dd><dt>Attendu</dt><dd>{alert.expected}</dd><dt>Observé</dt><dd>{alert.observed}</dd><dt>Preuves</dt><dd>{(alert.evidenceItems ?? fallbackEvidence(alert)).map((item) => `${item.source}, ${item.location}`).join(" ; ")}</dd><dt>Décision</dt><dd>{statusLabels[alert.status]}</dd><dt>Motif</dt><dd>{alert.decisionNote}</dd><dt>Suite</dt><dd>{alert.action}</dd></dl>
-                </article>
-              )) : <p className="empty-report">Aucun constat exportable : confirmez au moins un élément après examen de sa preuve.</p>}
-            </div>
-          </section>
+      <section className={styles.signature} aria-label="Principe ATHAR">
+        <div className={styles.signatureInner}>
+          <span className={styles.signatureIndex}>01</span>
+          <strong>Chaque alerte mène à sa preuve</strong>
+          <p>Le signal ouvre une vérification. La décision reste au contrôleur.</p>
         </div>
-      )}
+      </section>
+
+      <section className={`${styles.section} ${styles.problemSection}`} id="enjeu" aria-labelledby="enjeu-title">
+        <div className={styles.sectionIntro}>
+          <div><span className={styles.eyebrow}>ENJEU</span><h2 id="enjeu-title">Un chemin vérifiable pour chaque contrôle</h2></div>
+          <p>Les pièces, les données et les procès-verbaux doivent être rapprochés avant de confirmer un point. ATHAR réduit cette dispersion et conserve le lien avec les sources.</p>
+        </div>
+        <div className={styles.problemGrid}>
+          <article className={styles.problemCard}>
+            <span className={styles.cardIcon}><LayersIcon /></span>
+            <h3>Sources dispersées</h3>
+            <p>Le contrôleur passe d’une pièce à l’autre pour reconstituer le contexte utile au dossier.</p>
+          </article>
+          <article className={styles.problemCard}>
+            <span className={styles.cardIcon}><Scale size={18} aria-hidden="true" /></span>
+            <h3>Rapprochement</h3>
+            <p>Règle, attendu et observé sont comparés sans perdre la provenance de l’information.</p>
+          </article>
+          <article className={styles.problemCard}>
+            <span className={styles.cardIcon}><FileCheck2 size={18} aria-hidden="true" /></span>
+            <h3>Justification</h3>
+            <p>Chaque constat reste relié à la pièce et au passage qui le fondent.</p>
+          </article>
+        </div>
+        <p className={styles.cautionNote}><CheckCircle2 size={15} aria-hidden="true" /> Une pièce manquante n’est pas une anomalie : elle doit être signalée séparément.</p>
+      </section>
+
+      <section className={`${styles.section} ${styles.approachSection}`} id="approche" aria-labelledby="approche-title">
+        <div className={styles.sectionIntro}>
+          <div><span className={styles.eyebrow}>APPROCHE</span><h2 id="approche-title">De la pièce à la décision</h2></div>
+          <p>ATHAR organise le contrôle autour du dossier, des points à vérifier et des preuves nécessaires à la décision.</p>
+        </div>
+        <ol className={styles.flow}>
+          <li><span className={styles.flowNumber}>01</span><BookOpen size={19} aria-hidden="true" /><h3>Regrouper</h3><p>Réunir les pièces et conserver leur provenance</p></li>
+          <li><span className={styles.flowNumber}>02</span><Scale size={19} aria-hidden="true" /><h3>Contrôler</h3><p>Appliquer les contrôles utiles au contexte du dossier</p></li>
+          <li><span className={styles.flowNumber}>03</span><FileSearch2 size={19} aria-hidden="true" /><h3>Prouver</h3><p>Revenir à la source, à la page et au passage utile</p></li>
+          <li><span className={styles.flowNumber}>04</span><UserCheck size={19} aria-hidden="true" /><h3>Valider</h3><p>Confirmer, écarter ou demander une pièce</p></li>
+        </ol>
+      </section>
+
+      <section className={`${styles.section} ${styles.workspaceSection}`} id="workspace" aria-labelledby="workspace-title">
+        <div className={styles.sectionIntro}>
+          <div><span className={styles.eyebrow}>ESPACE PRODUIT</span><h2 id="workspace-title">Un espace conçu autour du dossier</h2></div>
+          <p>Les pièces, le point à vérifier, la règle et la source restent visibles dans un même contexte de travail.</p>
+        </div>
+        <div className={styles.workspaceShowcase}>
+          <div className={styles.workspaceProduct}><ProductWorkspace compact /></div>
+          <div className={styles.workspaceCopy}>
+            <span className={styles.featureNumber}>02</span>
+            <h3>Tout le contrôle dans un même contexte</h3>
+            <p>À gauche, les pièces et les points à vérifier. Au centre, la source. À droite, la règle, l’attendu, l’observé et la décision.</p>
+            <ul className={styles.featureList}>
+              <li><CheckCircle2 size={15} aria-hidden="true" /> Pièces du dossier</li>
+              <li><CheckCircle2 size={15} aria-hidden="true" /> Points à vérifier</li>
+              <li><CheckCircle2 size={15} aria-hidden="true" /> Passage source relié</li>
+              <li><CheckCircle2 size={15} aria-hidden="true" /> Décision du contrôleur</li>
+            </ul>
+            <Link href="/v3" className={styles.primaryButton}>Ouvrir le démonstrateur <ArrowRight size={16} aria-hidden="true" /></Link>
+          </div>
+        </div>
+      </section>
+
+      <section className={styles.evidenceSection} id="preuve" aria-labelledby="preuve-title">
+        <div className={styles.evidenceInner}>
+          <div className={styles.sectionIntroDark}>
+            <div><span className={styles.eyebrowDark}>PREUVES & TRAÇABILITÉ</span><h2 id="preuve-title">Chaque alerte mène à sa preuve</h2></div>
+            <p>ATHAR montre ce qui déclenche le signal, où retrouver la source et ce qu’il manque pour décider.</p>
+          </div>
+          <div className={styles.evidenceLayout}>
+            <div className={styles.evidenceCard}>
+              <div className={styles.evidenceCardTop}><span className={styles.evidenceState}><CheckCircle2 size={13} aria-hidden="true" /> Preuve retrouvée</span><span>CTRL-ACC-01</span></div>
+              <span className={styles.evidenceLabel}>Passage source relié</span>
+              <p>« Le soumissionnaire doit être partenaire certifié agréé… »</p>
+              <div className={styles.evidenceMeta}><span><FileText size={13} aria-hidden="true" /> CPS fictif · Page 6</span></div>
+            </div>
+            <div className={styles.evidenceChain} aria-label="Chaîne de traçabilité">
+              <div><span>01</span><strong>Source</strong><small>Pièce</small></div>
+              <div><span>02</span><strong>Localisation</strong><small>Page / passage</small></div>
+              <div><span>03</span><strong>Contrôle</strong><small>Règle</small></div>
+              <div><span>04</span><strong>Décision</strong><small>Validation humaine</small></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className={`${styles.section} ${styles.humanSection}`} aria-labelledby="humain-title">
+        <div className={styles.humanLayout}>
+          <div className={styles.humanCopy}>
+            <span className={styles.eyebrow}>CONTRÔLE HUMAIN</span>
+            <h2 id="humain-title">ATHAR signale, le contrôleur décide</h2>
+            <p>Aucun point signalé par ATHAR ne devient automatiquement un constat. Le contrôleur peut confirmer, écarter, demander une pièce ou laisser le point en attente.</p>
+            <p className={styles.smallNote}>Chaque décision reste reliée aux éléments examinés.</p>
+          </div>
+          <div className={styles.decisionCard}>
+            <div className={styles.decisionCardHeader}><span>POINT À VÉRIFIER</span><strong>À examiner</strong></div>
+            <h3>Clause technique</h3>
+            <p>Le passage source et la règle sont visibles avant toute action.</p>
+            <div className={styles.decisionNote}><span>DÉCISION DU CONTRÔLEUR</span><small>Justification requise</small></div>
+            <div className={styles.decisionActions}><span className={styles.decisionPrimary}><UserCheck size={14} aria-hidden="true" /> Confirmer</span><span>Demander une pièce</span><span>Écarter</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section className={`${styles.section} ${styles.sovereigntySection}`} id="souverainete" aria-labelledby="souverainete-title">
+        <div className={styles.sovereigntyLayout}>
+          <div>
+            <span className={styles.eyebrow}>SOUVERAINETÉ</span>
+            <h2 id="souverainete-title">L’institution garde la maîtrise</h2>
+            <p>ATHAR est conçu pour fonctionner dans l’environnement autorisé par l’institution. Dans le scénario on-premise cible, les documents, preuves, décisions et livrables restent dans le périmètre défini avec la DSI.</p>
+          </div>
+          <div className={styles.boundaryCard} aria-label="Déploiement institutionnel">
+            <div className={styles.boundaryHeader}><span className={styles.boundaryTag}><Server size={14} aria-hidden="true" /> Scénario cible</span><span>Environnement autorisé</span></div>
+            <div className={styles.boundaryFlow}>
+              <div><FileText size={17} aria-hidden="true" /><strong>Documents</strong><small>Sources sensibles</small></div>
+              <span className={styles.boundaryArrow}>→</span>
+              <div><ShieldCheck size={17} aria-hidden="true" /><strong>ATHAR</strong><small>Contrôle local</small></div>
+              <span className={styles.boundaryArrow}>→</span>
+              <div><UserCheck size={17} aria-hidden="true" /><strong>Décision</strong><small>Validation humaine</small></div>
+            </div>
+            <div className={styles.boundaryFooter}><LockKeyhole size={14} aria-hidden="true" /> Périmètre et modalités à définir avec la DSI</div>
+          </div>
+        </div>
+      </section>
+
+      <section className={`${styles.section} ${styles.useCasesSection}`} aria-labelledby="cas-title">
+        <div className={styles.sectionIntro}>
+          <div><span className={styles.eyebrow}>CAS D’USAGE</span><h2 id="cas-title">Un socle pour plusieurs contrôles publics</h2></div>
+          <p>La commande publique est le premier cas démontré. Les autres usages sont cadrés avec chaque institution selon ses règles, ses sources et ses livrables.</p>
+        </div>
+        <div className={styles.useCasesGrid}>
+          <article className={`${styles.useCaseCard} ${styles.useCaseActive}`}>
+            <div className={styles.useCaseTop}><span className={styles.useCaseStatus}>Démontré</span><Scale size={19} aria-hidden="true" /></div>
+            <h3>Commande publique</h3>
+            <p>Examiner la mise en concurrence, l’évaluation des offres et l’attribution.</p>
+            <div className={styles.useCaseTags}><span>Données fictives</span></div>
+          </article>
+          <article className={styles.useCaseCard}>
+            <div className={styles.useCaseTop}><span className={styles.useCaseStatusMuted}>À cadrer</span><FileSearch2 size={19} aria-hidden="true" /></div>
+            <h3>Contrôles documentaires</h3>
+            <p>Adapter ATHAR à des contrôles fondés sur des règles et des sources définies par l’institution.</p>
+          </article>
+          <article className={styles.useCaseCard}>
+            <div className={styles.useCaseTop}><span className={styles.useCaseStatusMuted}>À cadrer</span><FileCheck2 size={19} aria-hidden="true" /></div>
+            <h3>Revues administratives</h3>
+            <p>Examiner des dossiers où chaque décision doit rester reliée aux faits et aux pièces.</p>
+          </article>
+        </div>
+      </section>
+
+      <section className={`${styles.section} ${styles.whySection}`} aria-labelledby="why-title">
+        <div className={styles.sectionIntro}>
+          <div><span className={styles.eyebrow}>POURQUOI ATHAR</span><h2 id="why-title">Contrôler plus vite sans sacrifier la preuve</h2></div>
+          <p>ATHAR réunit les éléments essentiels d’un contrôle professionnel sans retirer au contrôleur la maîtrise de la décision.</p>
+        </div>
+        <div className={styles.principlesGrid}>
+          <article><span className={styles.principleIcon}><FileSearch2 size={18} aria-hidden="true" /></span><h3>Preuve avant conclusion</h3><p>Le passage source reste accessible au moment d’examiner le signal.</p></article>
+          <article><span className={styles.principleIcon}><Scale size={18} aria-hidden="true" /></span><h3>Contrôles explicites</h3><p>Le contrôleur voit la règle, l’attendu et l’observé.</p></article>
+          <article><span className={styles.principleIcon}><UserCheck size={18} aria-hidden="true" /></span><h3>Responsabilité humaine</h3><p>ATHAR prépare et documente, la personne habilitée décide.</p></article>
+          <article><span className={styles.principleIcon}><LockKeyhole size={18} aria-hidden="true" /></span><h3>Déploiement maîtrisé</h3><p>Le déploiement s’adapte à l’environnement autorisé par l’institution.</p></article>
+        </div>
+      </section>
+
+      <section className={styles.finalCta} aria-labelledby="final-title">
+        <div className={styles.finalCtaInner}>
+          <div><span className={styles.eyebrowDark}>DÉMONSTRATEUR</span><h2 id="final-title">Examinez le dossier, suivez la preuve, décidez</h2><p>Le démonstrateur présente un dossier d’exemple et le parcours complet : point à vérifier, règle, preuve, décision humaine et fiche de constat provisoire.</p></div>
+          <div className={styles.finalCtaAction}><Link href="/v3" className={styles.lightButton}>Ouvrir le démonstrateur <ArrowRight size={16} aria-hidden="true" /></Link><span><CheckCircle2 size={14} aria-hidden="true" /> Données fictives · validation humaine requise</span></div>
+        </div>
+      </section>
+
+      <footer className={styles.footer}>
+        <div className={styles.footerInner}>
+          <Link href="/" className={styles.footerBrand}><span className={styles.footerMark}><ShieldCheck size={15} aria-hidden="true" /></span><span><strong>ATHAR</strong><small>Chaque alerte mène à sa preuve</small></span></Link>
+          <nav className={styles.footerNav} aria-label="Navigation secondaire"><a href="#approche">Approche</a><a href="#preuve">Preuves</a><a href="#souverainete">Souveraineté</a><Link href="/v3">Démonstrateur</Link><span className={styles.footerLegalNav} role="group" aria-label="Informations légales"><Link href="/mentions-legales">Mentions légales</Link><Link href="/confidentialite">Confidentialité</Link><Link href="/cookies">Cookies</Link><Link href="/accessibilite">Accessibilité</Link></span></nav>
+          <p>Solution GovTech pour le contrôle public<br /><span>Démonstrateur fonctionnel · données fictives</span></p>
+        </div>
+      </footer>
     </main>
   );
+}
+
+function LayersIcon() {
+  return <span className={styles.layersIcon} aria-hidden="true"><span /><span /><span /></span>;
 }
