@@ -295,7 +295,7 @@ export default function Home() {
 
       <section className={styles.finalCta} aria-labelledby="final-title">
         <div className={styles.finalCtaInner}>
-          <div><span className={styles.eyebrowDark}>DÉMONSTRATEUR</span><h2 id="final-title">Examinez le dossier, suivez la preuve, décidez</h2><p>Le démonstrateur présente un dossier fictif et le parcours complet : point à vérifier, règle, preuve, décision humaine et fiche de constat provisoire.</p></div>
+          <div><span className={styles.eyebrowDark}>DÉMONSTRATEUR</span><h2 id="final-title">Examinez le dossier, suivez la preuve, décidez</h2><p>Le démonstrateur présente un dossier d’exemple et le parcours complet : point à vérifier, règle, preuve, décision humaine et fiche de constat provisoire.</p></div>
           <div className={styles.finalCtaAction}><Link href="/v3" className={styles.lightButton}>Ouvrir le démonstrateur <ArrowRight size={16} aria-hidden="true" /></Link><span><CheckCircle2 size={14} aria-hidden="true" /> Données fictives · validation humaine requise</span></div>
         </div>
       </section>
