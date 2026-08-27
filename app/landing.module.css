@@ -234,6 +234,8 @@
 .footerBrand small { color: #a8bdba; font-size: 9px; }
 .footerNav { display: flex; flex-wrap: wrap; gap: 15px; }
 .footerNav a { color: #c2d1ce; font-size: 10px; text-decoration: none; }
+.footerLegalNav { border-left: 1px solid rgba(194, 209, 206, .24); display: flex; flex-wrap: wrap; gap: 15px; padding-left: 15px; }
+.footerLegalNav a { color: #9fb5b1; }
 .footerInner p { color: #b8c9c5; font-size: 10px; line-height: 1.55; margin: 0; text-align: right; }
 .footerInner p span { color: #8fa9a5; }
 
@@ -348,6 +350,7 @@
   .footerBrand small { line-height: 1.3; }
   .footerNav { display: grid; gap: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .footerNav a { align-items: center; display: inline-flex; min-height: 44px; }
+  .footerLegalNav { border-left: 0; border-top: 1px solid rgba(194, 209, 206, .24); display: grid; gap: 0 12px; grid-column: 1 / -1; grid-template-columns: repeat(2, minmax(0, 1fr)); padding-left: 0; padding-top: 8px; }
   .footerInner p { font-size: 10px; line-height: 1.55; }
 }
 

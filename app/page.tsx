@@ -303,7 +303,7 @@ export default function Home() {
       <footer className={styles.footer}>
         <div className={styles.footerInner}>
           <Link href="/" className={styles.footerBrand}><span className={styles.footerMark}><ShieldCheck size={15} aria-hidden="true" /></span><span><strong>ATHAR</strong><small>Chaque alerte mène à sa preuve</small></span></Link>
-          <nav className={styles.footerNav} aria-label="Navigation secondaire"><a href="#approche">Approche</a><a href="#preuve">Preuves</a><a href="#souverainete">Souveraineté</a><Link href="/v3">Démonstrateur</Link></nav>
+          <nav className={styles.footerNav} aria-label="Navigation secondaire"><a href="#approche">Approche</a><a href="#preuve">Preuves</a><a href="#souverainete">Souveraineté</a><Link href="/v3">Démonstrateur</Link><span className={styles.footerLegalNav} role="group" aria-label="Informations légales"><Link href="/mentions-legales">Mentions légales</Link><Link href="/confidentialite">Confidentialité</Link><Link href="/cookies">Cookies</Link><Link href="/accessibilite">Accessibilité</Link></span></nav>
           <p>Solution GovTech pour le contrôle public<br /><span>Démonstrateur fonctionnel · données fictives</span></p>
         </div>
       </footer>
